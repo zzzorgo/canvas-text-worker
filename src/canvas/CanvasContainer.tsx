@@ -80,7 +80,7 @@ export function renderMouseMoveFeedback(ctx: CanvasRenderingContext2D, elements:
     elements.forEach((element) => {
         if (element.isHit(x, y)) {
             ctx.fillStyle = 'green';
-            ctx.globalAlpha = 0.3;
+            ctx.globalAlpha = 0.5;
             const { x: rectX, y: rectY, width, height } = element.rect;
             ctx.fillRect(rectX, rectY, width, height);
         }

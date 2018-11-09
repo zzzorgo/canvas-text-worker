@@ -1,26 +1,26 @@
-import { csvData } from "./data";
+// import { csvData } from "./data";
 
-export function parse(data : string) : object[] {
-    const rows : string[] = data.split('\n');
-    const headers : string[] = rows[0].split(';');
-    const dataRows : string[] = rows.slice(1);
+// export function parse(data : string) : object[] {
+//     const rows : string[] = data.split('\n');
+//     const headers : string[] = rows[0].split(';');
+//     const dataRows : string[] = rows.slice(1);
 
-    const entries = [];
+//     const entries = [];
 
-    for (const rawEntry of dataRows)
-    {
-        const entry = {};
-        const splitedRawEntry = rawEntry.split(';');
+//     for (const rawEntry of dataRows)
+//     {
+//         const entry = {};
+//         const splitedRawEntry = rawEntry.split(';');
 
-        for (let i = 0; i < headers.length; i++) {
-            const fieldName : string = headers[i];
-            entry[fieldName] = splitedRawEntry[i];
-        }
+//         for (let i = 0; i < headers.length; i++) {
+//             const fieldName : string = headers[i];
+//             entry[fieldName] = splitedRawEntry[i];
+//         }
 
-        entries.push(entry);
-    }
+//         entries.push(entry);
+//     }
 
-    return entries; 
-}
+//     return entries; 
+// }
 
-export const result : object[] = parse(csvData);
+// export const result : object[] = parse(csvData);
