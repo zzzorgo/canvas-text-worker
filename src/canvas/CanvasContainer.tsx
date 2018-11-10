@@ -10,27 +10,26 @@ const TEXT = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do ei
 const WORD_REG = /([\w\dА-Яа-яёЁ]+)/;
 const SPLIT_TEXT_REG = /([^\w\dА-Яа-яёЁ]+)|([\w\dА-Яа-яёЁ]+)/g;
 
-interface ICanvasParams {
+export interface ICanvasParams {
     ctx: CanvasRenderingContext2D,
     width: number
 }
 
 type MouseEvent = React.MouseEvent<HTMLElement>;
 
-export function simpleTextRender(canvasParams: ICanvasParams, text: string): TextCanvasElement[] {
+export function getElementsFromText(canvasParams: ICanvasParams, text: string): TextCanvasElement[] {
     const LINE_HEIGHT = 40;
     const TEXT_MARGIN = 10;
     const FONT_SIZE = LINE_HEIGHT - 10;
     const FONT_SETTINGS = `400 normal ${FONT_SIZE}px Arial`;
     const { ctx, width: canvasWidth } = canvasParams;
 
+    ctx.textBaseline = 'bottom';
     ctx.font = FONT_SETTINGS;
 
     const rawBlocks = text.match(SPLIT_TEXT_REG) || [];
     const blocks: TextCanvasElement[] = [];
 
-    ctx.fillStyle = 'silver';
-    ctx.textBaseline = 'bottom';
     rawBlocks.reduce((offset, rawBlock) => {
         const blockWidth = ctx.measureText(rawBlock).width;
         const blockIsTooBig = offset.x + blockWidth >= canvasWidth - TEXT_MARGIN;
@@ -72,7 +71,6 @@ export function simpleTextRender(canvasParams: ICanvasParams, text: string): Tex
         }, offset.x);
 
         blocks.push(block);
-        ctx.fillText(rawBlock, offset.x, offset.y);
         offset.x += blockWidth;
 
         return offset;
@@ -81,29 +79,13 @@ export function simpleTextRender(canvasParams: ICanvasParams, text: string): Tex
     return blocks;
 }
 
-export function renderMouseMoveFeedback(ctx: CanvasRenderingContext2D, elements: CanvasElement[], pointer: IPoint) {
+export function setHitElements(ctx: CanvasRenderingContext2D, elements: CanvasElement[], pointer: IPoint) {
     const {x, y} = pointer;
-    const savedGlobalAlpha = ctx.globalAlpha;
 
     elements.forEach((element) => {
-        if (element.isHit(x, y)) {
-            ctx.fillStyle = 'green';
-            ctx.globalAlpha = 0.5;
-            const { x: rectX, y: rectY, width, height } = element.rect;
-            ctx.fillRect(rectX, rectY, width, height);
-
-            element.children.forEach((child) => {
-                if (child.isHit(x, y)) {
-                    ctx.fillStyle = 'red';
-                    
-                    const { x: childRectX, y: childRectY, width: childWidth, height: childHeight } = child.rect;
-                    ctx.fillRect(childRectX, childRectY, childWidth, childHeight);
-                }
-            });
-        }
+        element.setIsHit(x, y);
+        setHitElements(ctx, element.children, pointer);
     });
-
-    ctx.globalAlpha = savedGlobalAlpha;
 }
 
 export function clearCanvas(canvasParams: ICanvasParams) {
@@ -111,6 +93,11 @@ export function clearCanvas(canvasParams: ICanvasParams) {
 
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvasWidth, CANVAS_HEIGHT);
+}
+
+function renderWithChildren(canvasParams: ICanvasParams, element: CanvasElement) {
+    element.render(canvasParams);
+    element.children.forEach(child => renderWithChildren(canvasParams, child));
 }
 
 interface ICanvasContainerState {
@@ -139,7 +126,6 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
     public componentDidMount() {
         if (this.canvas) {
             this.ctx = this.canvas.getContext('2d');
-            // this.canvas.addEventListener('mousemove', this.canvasMouseMove)
             this.renderOnCanvas(this.ctx);
         }
     }
@@ -175,7 +161,12 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
         const canvasParams = {ctx, width: canvasWidth};
 
         clearCanvas(canvasParams);
-        const elements = simpleTextRender({ctx, width: canvasWidth}, text);
-        renderMouseMoveFeedback(ctx, elements, pointerPosition);
+        const elements = getElementsFromText({ctx, width: canvasWidth}, text);
+        
+        setHitElements(ctx, elements, pointerPosition);
+
+        elements.forEach(element => {
+            renderWithChildren(canvasParams, element);
+        });
     }
 }
