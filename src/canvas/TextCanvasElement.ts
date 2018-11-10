@@ -3,5 +3,5 @@ import { CharCanvasElement } from './CharCanvasElement';
 
 export class TextCanvasElement extends CanvasElement {
     public rawText: string;
-    public chars: CharCanvasElement[] = [];
+    public children: CharCanvasElement[] = [];
 }

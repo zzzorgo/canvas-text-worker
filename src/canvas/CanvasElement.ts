@@ -12,6 +12,7 @@ export interface IRect {
 
 export class CanvasElement {
     public rect: IRect;
+    public children: CanvasElement[] = [];
 
     public isHit = (x: number, y: number) => {
         const hitArea = this.rect;
