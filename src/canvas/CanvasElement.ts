@@ -1,5 +1,3 @@
-import { ICanvasParams } from "./CanvasContainer";
-
 export interface IPoint {
     x: number,
     y: number
@@ -10,6 +8,12 @@ export interface IRect {
     y: number;
     width: number;
     height: number;
+}
+
+export interface ICanvasParams {
+    ctx: CanvasRenderingContext2D,
+    width: number,
+    height: number
 }
 
 export abstract class CanvasElement {
