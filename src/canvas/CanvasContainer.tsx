@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { IPoint } from './CanvasElement';
+import { CanvasElement, IPoint } from './CanvasElement';
 import { getElementsFromText, setHitElements } from './dataUtils';
 import { clearCanvas, renderWithChildren } from './renderUtils';
 
@@ -37,12 +37,14 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
     public componentDidMount() {
         if (this.canvas) {
             this.ctx = this.canvas.getContext('2d');
-            this.renderOnCanvas(this.ctx);
+
+            this.prepareDataAndRender();
         }
     }
+
     
-    public componentDidUpdate() {
-        this.renderOnCanvas(this.ctx);
+    public componentDidUpdate() {      
+        this.prepareDataAndRender();
     }
     
     public render() {
@@ -55,10 +57,20 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
                 height={canvasHeight}
                 ref={ref => this.canvas = ref} />
         );
+    }   
+    
+    private prepareDataAndRender() {
+        const { ctx } = this;
+        if (!ctx) { return; }
+        const { text, pointerPosition, canvasWidth, canvasHeight } = this.state;
+        const canvasParams = {ctx, width: canvasWidth, height: canvasHeight};
+        const elements = getElementsFromText(canvasParams, text);
+        setHitElements(ctx, elements, pointerPosition);
+        this.renderOnCanvas(ctx, elements);
     }
 
     private handleCanvasClick = (e: MouseEvent) => {
-        // this.setState({canvasWidth: this.state.canvasWidth + 10});
+        // this.setState({canvasWidth: this.state.canvasWidth + 30});
     };
 
     private handleCanvasMouseMove = (e: MouseEvent) => {
@@ -66,15 +78,13 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
         this.setState({pointerPosition: {x: clientX, y: clientY}});
     };
 
-    private renderOnCanvas(ctx: CanvasRenderingContext2D | null) {
-        const { text, pointerPosition, canvasWidth, canvasHeight } = this.state;
+    private renderOnCanvas(ctx: CanvasRenderingContext2D | null, elements: CanvasElement[]) {
         if (!ctx) { return; }
+
+        const { canvasWidth, canvasHeight } = this.state;
         const canvasParams = {ctx, width: canvasWidth, height: canvasHeight};
 
         clearCanvas(canvasParams);
-        const elements = getElementsFromText(canvasParams, text);
-        
-        setHitElements(ctx, elements, pointerPosition);
 
         elements.forEach(element => {
             renderWithChildren(canvasParams, element);

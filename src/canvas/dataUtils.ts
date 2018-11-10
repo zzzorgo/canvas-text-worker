@@ -20,6 +20,7 @@ export function getElementsFromText(canvasParams: ICanvasParams, text: string): 
     const FONT_SIZE = LINE_HEIGHT - 10;
     const FONT_SETTINGS = `400 normal ${FONT_SIZE}px Arial`;
     const { ctx, width: canvasWidth } = canvasParams;
+    let globalCharIndex = 0;
 
     ctx.textBaseline = 'bottom';
     ctx.font = FONT_SETTINGS;
@@ -49,7 +50,7 @@ export function getElementsFromText(canvasParams: ICanvasParams, text: string): 
         block.rect = blockRect,
         block.rawText = rawBlock;
 
-        rawBlock.split('').reduce((offsetX, rawChar) => {
+        rawBlock.split('').reduce((offsetX, rawChar, blockCharIndex) => {
             const char = new CharCanvasElement();
             const charWidth = ctx.measureText(rawChar).width;
             const charRect = {
@@ -61,12 +62,14 @@ export function getElementsFromText(canvasParams: ICanvasParams, text: string): 
 
             char.rect = charRect;
             char.rawChar = rawChar;
+            char.index = globalCharIndex + blockCharIndex;
             
             block.children.push(char);
 
             return offsetX + charWidth;
         }, offset.x);
 
+        globalCharIndex += rawBlock.length;
         blocks.push(block);
         offset.x += blockWidth;
 
