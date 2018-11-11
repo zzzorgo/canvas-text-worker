@@ -18,6 +18,6 @@ export function clearCanvas(canvasParams: ICanvasParams) {
 }
 
 export function renderWithChildren(canvasParams: ICanvasParams, element: CanvasElement) {
-    element.render(canvasParams);
     element.children.forEach(child => renderWithChildren(canvasParams, child));
+    element.render(canvasParams);
 }
