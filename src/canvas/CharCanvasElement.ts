@@ -1,5 +1,5 @@
 import { CanvasElement, ICanvasParams } from './CanvasElement';
-import { fillRect } from './renderUtils';
+import { fillRect } from './utils/render';
 
 export class CharCanvasElement extends CanvasElement {
     public rawChar: string;

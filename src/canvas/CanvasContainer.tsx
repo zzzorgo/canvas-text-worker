@@ -1,24 +1,25 @@
 import * as React from 'react';
 import { CanvasElement, IPoint } from './CanvasElement';
-import { getElementsFromText, setHitElements } from './dataUtils';
-import { clearCanvas, renderWithChildren } from './renderUtils';
+import { CharCanvasElement } from './CharCanvasElement';
+import { INITIAL_CANVAS_HEIGHT, INITIAL_CANVAS_WIDTH, INITIAL_HIGHLIGHTED_CHARS, MouseEvent, TEXT, VIEW_PORT_SCALE } from './constants';
+import { HighlightCharCanvasElement } from './HighlightCharCanvasElement';
+import { getElementsFromText, handleElementClick, setHitElements, toggleArrayElement } from './utils/data';
+import { clearCanvas, renderWithChildren } from './utils/render';
 
-const INITIAL_CANVAS_WIDTH = 800;
-const INITIAL_CANVAS_HEIGHT = 600;
-const TEXT = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Ну и что-то на кириллице***`;
-
-type MouseEvent = React.MouseEvent<HTMLElement>;
+export type CharCanvasPlugin = (char: CharCanvasElement) => void;
 
 interface ICanvasContainerState {
-    text: string,
-    pointerPosition: IPoint,
+    canvasHeight: number,
     canvasWidth: number,
-    canvasHeight: number
+    highlightedChars: number[],
+    pointerPosition: IPoint,
+    text: string
 }
 
 export class CanvasContainer extends React.Component<{}, ICanvasContainerState> {
     private canvas: HTMLCanvasElement | null;
     private ctx: CanvasRenderingContext2D | null;
+    private elements: CanvasElement[];
 
     constructor(props: {}) {
         super(props);
@@ -26,6 +27,7 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
         this.state = {
             canvasHeight: INITIAL_CANVAS_HEIGHT,
             canvasWidth: INITIAL_CANVAS_WIDTH,
+            highlightedChars: INITIAL_HIGHLIGHTED_CHARS,
             pointerPosition: {
                 x: 0,
                 y: 0
@@ -55,22 +57,49 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
                 onMouseMove={this.handleCanvasMouseMove}
                 width={canvasWidth}
                 height={canvasHeight}
-                ref={ref => this.canvas = ref} />
+                ref={ref => this.canvas = ref} 
+                style={{
+                    height: canvasHeight / VIEW_PORT_SCALE,
+                    width: canvasWidth / VIEW_PORT_SCALE
+                }} />
         );
     }   
     
+    private highlightPlugin = (char: CharCanvasElement) => {
+        const { highlightedChars } = this.state;
+
+        if (highlightedChars.includes(char.index)) {
+            const highlight = new HighlightCharCanvasElement();
+            highlight.rect = char.rect;
+
+            char.children.push(highlight);
+        }
+    };
+
     private prepareDataAndRender() {
         const { ctx } = this;
         if (!ctx) { return; }
         const { text, pointerPosition, canvasWidth, canvasHeight } = this.state;
         const canvasParams = {ctx, width: canvasWidth, height: canvasHeight};
-        const elements = getElementsFromText(canvasParams, text);
-        setHitElements(ctx, elements, pointerPosition);
-        this.renderOnCanvas(ctx, elements);
+
+        this.elements = getElementsFromText(canvasParams, text, [this.highlightPlugin]);
+
+        this.elements.forEach(word => word.children.forEach(char => {
+            if (char instanceof CharCanvasElement) {
+                char.onClick = (e: MouseEvent) => {
+                    this.setState({
+                        highlightedChars: toggleArrayElement(this.state.highlightedChars, char.index)
+                    });
+                }
+            }
+        }));
+
+        setHitElements(ctx, this.elements, pointerPosition);
+        this.renderOnCanvas(ctx, this.elements);
     }
 
     private handleCanvasClick = (e: MouseEvent) => {
-        // this.setState({canvasWidth: this.state.canvasWidth + 30});
+        handleElementClick(this.elements, e);
     };
 
     private handleCanvasMouseMove = (e: MouseEvent) => {

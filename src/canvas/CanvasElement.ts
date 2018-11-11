@@ -1,3 +1,5 @@
+import { VIEW_PORT_SCALE } from './constants';
+
 export interface IPoint {
     x: number,
     y: number
@@ -26,12 +28,21 @@ export abstract class CanvasElement {
         this.isHit = this.checkHit(x, y)
     }
 
+    public getIsHit = () => this.isHit;
+
+    public onClick = (e: React.MouseEvent<HTMLElement>) => {
+        return;
+    }
+
     public abstract render(canvasParams: ICanvasParams): void;
 
     private checkHit = (x: number, y: number) => {
+        const viewPortX = x * VIEW_PORT_SCALE;
+        const viewPortY = y * VIEW_PORT_SCALE;
+
         const hitArea = this.rect;
-        const hitByX = x > hitArea.x && x < hitArea.x + hitArea.width;
-        const hitByY = y > hitArea.y && y < hitArea.y + hitArea.height;
+        const hitByX = viewPortX > hitArea.x && viewPortX < hitArea.x + hitArea.width;
+        const hitByY = viewPortY > hitArea.y && viewPortY < hitArea.y + hitArea.height;
         
         return hitByX && hitByY;
     }

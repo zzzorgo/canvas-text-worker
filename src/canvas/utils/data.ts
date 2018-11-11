@@ -1,6 +1,8 @@
-import { CanvasElement, ICanvasParams, IPoint } from './CanvasElement';
-import { CharCanvasElement } from './CharCanvasElement';
-import { TextCanvasElement } from './TextCanvasElement';
+import { CharCanvasPlugin } from '../CanvasContainer';
+import { CanvasElement, ICanvasParams, IPoint } from '../CanvasElement';
+import { CharCanvasElement } from '../CharCanvasElement';
+import { VIEW_PORT_SCALE } from '../constants';
+import { TextCanvasElement } from '../TextCanvasElement';
 
 export function setHitElements(ctx: CanvasRenderingContext2D, elements: CanvasElement[], pointer: IPoint) {
     const {x, y} = pointer;
@@ -14,10 +16,10 @@ export function setHitElements(ctx: CanvasRenderingContext2D, elements: CanvasEl
 const WORD_REG = /([\w\dА-Яа-яёЁ]+)/;
 const SPLIT_TEXT_REG = /([^\w\dА-Яа-яёЁ]+)|([\w\dА-Яа-яёЁ]+)/g;
 
-export function getElementsFromText(canvasParams: ICanvasParams, text: string): TextCanvasElement[] {
-    const LINE_HEIGHT = 40;
-    const TEXT_MARGIN = 10;
-    const FONT_SIZE = LINE_HEIGHT - 10;
+export function getElementsFromText(canvasParams: ICanvasParams, text: string, charPlugins: CharCanvasPlugin[] = []): TextCanvasElement[] {
+    const LINE_HEIGHT = 40 * VIEW_PORT_SCALE;
+    const TEXT_MARGIN = 10 * VIEW_PORT_SCALE;
+    const FONT_SIZE = LINE_HEIGHT / 1.25;
     const FONT_SETTINGS = `400 normal ${FONT_SIZE}px Arial`;
     const { ctx, width: canvasWidth } = canvasParams;
     let globalCharIndex = 0;
@@ -63,6 +65,8 @@ export function getElementsFromText(canvasParams: ICanvasParams, text: string): 
             char.rect = charRect;
             char.rawChar = rawChar;
             char.index = globalCharIndex + blockCharIndex;
+
+            charPlugins.forEach(plugin => plugin(char));
             
             block.children.push(char);
 
@@ -77,4 +81,25 @@ export function getElementsFromText(canvasParams: ICanvasParams, text: string): 
     }, {x: TEXT_MARGIN, y: LINE_HEIGHT});
 
     return blocks;
+}
+
+export function handleElementClick(elements: CanvasElement[], e: React.MouseEvent<HTMLElement>) {
+    elements.forEach(element => {
+        if (element.getIsHit()) {
+            element.onClick(e);
+        }
+
+        handleElementClick(element.children, e);
+    });
+}
+
+export function toggleArrayElement(array: any[], element: any) : any[] {
+    if (!array.includes(element)) {
+        return [
+            ...array,
+            element
+        ];
+    } else {
+        return array.filter(oldElement => oldElement !== element);
+    }
 }
