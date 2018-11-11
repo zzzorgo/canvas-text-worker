@@ -34,6 +34,10 @@ export abstract class CanvasElement {
         return;
     }
 
+    public onContextMenu = (e: React.MouseEvent<HTMLElement>) => {
+        return;
+    }
+
     public abstract render(canvasParams: ICanvasParams): void;
 
     private checkHit = (x: number, y: number) => {

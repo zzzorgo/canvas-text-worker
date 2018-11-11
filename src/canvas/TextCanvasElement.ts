@@ -1,11 +1,11 @@
 import { CanvasElement, ICanvasParams } from './CanvasElement';
-import { CharCanvasElement } from './CharCanvasElement';
 import { TEXT_COLOR } from './constants';
 import { fillRect } from './utils/render';
 
 export class TextCanvasElement extends CanvasElement {
     public rawText: string;
-    public children: CharCanvasElement[] = [];
+    public children: CanvasElement[] = [];
+    public index: number;
 
     public render(canvasParams: ICanvasParams) {
         const { ctx } = canvasParams;

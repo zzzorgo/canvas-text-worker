@@ -1,17 +1,19 @@
 import * as React from 'react';
 import { CanvasElement, IPoint } from './CanvasElement';
 import { CharCanvasElement } from './CharCanvasElement';
-import { INITIAL_CANVAS_HEIGHT, INITIAL_CANVAS_WIDTH, INITIAL_HIGHLIGHTED_CHARS, MouseEvent, TEXT, VIEW_PORT_SCALE } from './constants';
-import { HighlightCharCanvasElement } from './HighlightCharCanvasElement';
-import { getElementsFromText, handleElementClick, setHitElements, toggleArrayElement } from './utils/data';
+import { INITIAL_CANVAS_HEIGHT, INITIAL_CANVAS_WIDTH, INITIAL_HIGHLIGHTED_CHARS, INITIAL_HIGHLIGHTED_WORDS, MouseEvent, TEXT, VIEW_PORT_SCALE } from './constants';
+import { RectHighlightCanvasElement } from './RectHighlightCanvasElement';
+import { TextCanvasElement } from './TextCanvasElement';
+import { getElementsFromText, handleElementClickEvents, setHitElements, toggleArrayElement } from './utils/data';
 import { clearCanvas, renderWithChildren } from './utils/render';
 
-export type CharCanvasPlugin = (char: CharCanvasElement) => void;
+export type RenderPlugin = (element: CanvasElement) => void;
 
 interface ICanvasContainerState {
     canvasHeight: number,
     canvasWidth: number,
     highlightedChars: number[],
+    highlightedWords: number[],
     pointerPosition: IPoint,
     text: string
 }
@@ -28,6 +30,7 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
             canvasHeight: INITIAL_CANVAS_HEIGHT,
             canvasWidth: INITIAL_CANVAS_WIDTH,
             highlightedChars: INITIAL_HIGHLIGHTED_CHARS,
+            highlightedWords: INITIAL_HIGHLIGHTED_WORDS,
             pointerPosition: {
                 x: 0,
                 y: 0
@@ -54,6 +57,7 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
         return (
             <canvas
                 onClick={this.handleCanvasClick}
+                onContextMenu={this.handleCanvasContextMenu}
                 onMouseMove={this.handleCanvasMouseMove}
                 width={canvasWidth}
                 height={canvasHeight}
@@ -65,14 +69,25 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
         );
     }   
     
-    private highlightPlugin = (char: CharCanvasElement) => {
+    private charHighlightPlugin = (char: CharCanvasElement) => {
         const { highlightedChars } = this.state;
 
         if (highlightedChars.includes(char.index)) {
-            const highlight = new HighlightCharCanvasElement();
+            const highlight = new RectHighlightCanvasElement();
             highlight.rect = char.rect;
 
             char.children.push(highlight);
+        }
+    };
+
+    private wordHighlightPlugin = (word: TextCanvasElement) => {
+        const { highlightedWords } = this.state;
+
+        if (highlightedWords.includes(word.index)) {
+            const highlight = new RectHighlightCanvasElement();
+            highlight.rect = word.rect;
+
+            word.children.push(highlight);
         }
     };
 
@@ -82,24 +97,42 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
         const { text, pointerPosition, canvasWidth, canvasHeight } = this.state;
         const canvasParams = {ctx, width: canvasWidth, height: canvasHeight};
 
-        this.elements = getElementsFromText(canvasParams, text, [this.highlightPlugin]);
-
-        this.elements.forEach(word => word.children.forEach(char => {
-            if (char instanceof CharCanvasElement) {
-                char.onClick = (e: MouseEvent) => {
-                    this.setState({
-                        highlightedChars: toggleArrayElement(this.state.highlightedChars, char.index)
-                    });
-                }
-            }
-        }));
+        this.elements = getElementsFromText(canvasParams, text, [this.wordHighlightPlugin], [this.charHighlightPlugin]);
+        this.bindEventHandlers(this.elements);
 
         setHitElements(ctx, this.elements, pointerPosition);
         this.renderOnCanvas(ctx, this.elements);
     }
 
+    private bindEventHandlers = (elements: CanvasElement[]) => {
+        elements.forEach(word => {
+            if (word instanceof TextCanvasElement) {
+                word.onContextMenu = (e: MouseEvent) => {
+                    this.setState({
+                        highlightedWords: toggleArrayElement(this.state.highlightedWords, word.index)
+                    });
+                };
+            }
+
+            word.children.forEach(char => {
+                if (char instanceof CharCanvasElement) {
+                    char.onClick = (e: MouseEvent) => {
+                        this.setState({
+                            highlightedChars: toggleArrayElement(this.state.highlightedChars, char.index)
+                        });
+                    }
+                }
+            }
+        )});
+    }
+
     private handleCanvasClick = (e: MouseEvent) => {
-        handleElementClick(this.elements, e);
+        handleElementClickEvents('onClick', this.elements, e);
+    };
+
+    private handleCanvasContextMenu = (e: MouseEvent) => {
+        e.preventDefault();
+        handleElementClickEvents('onContextMenu', this.elements, e);
     };
 
     private handleCanvasMouseMove = (e: MouseEvent) => {
