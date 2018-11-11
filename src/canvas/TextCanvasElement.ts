@@ -10,7 +10,7 @@ export class TextCanvasElement extends CanvasElement {
         const { ctx } = canvasParams;
         
         if (this.isHit) {
-            fillRect(ctx, this.rect, 'green', 0.4);
+            fillRect(ctx, this.rect, 'black', 0.1);
         }
     }
 }

@@ -9,11 +9,12 @@ export class CharCanvasElement extends CanvasElement {
     public render(canvasParams: ICanvasParams) {
         const { ctx } = canvasParams;
 
+        if (this.isHit) {
+            fillRect(ctx, this.rect, 'red', 0.3);
+        }
+
         ctx.fillStyle = TEXT_COLOR;
         ctx.fillText(this.rawChar, this.rect.x, this.rect.y + this.rect.height);
 
-        if (this.isHit) {
-            fillRect(ctx, this.rect, 'red', 0.4);
-        }
     }
 }
