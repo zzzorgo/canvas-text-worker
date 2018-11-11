@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { CanvasElement, IPoint } from './CanvasElement';
 import { CharCanvasElement } from './CharCanvasElement';
-import { INITIAL_CANVAS_HEIGHT, INITIAL_CANVAS_WIDTH, INITIAL_HIGHLIGHTED_CHARS, INITIAL_HIGHLIGHTED_WORDS, MouseEvent, TEXT, VIEW_PORT_SCALE } from './constants';
+import { INITIAL_CANVAS_HEIGHT, INITIAL_HIGHLIGHTED_CHARS, INITIAL_HIGHLIGHTED_WORDS, MouseEvent, TEXT, VIEW_PORT_SCALE } from './constants';
 import { RectHighlightCanvasElement } from './RectHighlightCanvasElement';
 import { TextCanvasElement } from './TextCanvasElement';
 import { getElementsFromText, handleElementClickEvents, setHitElements, toggleArrayElement } from './utils/data';
@@ -28,7 +28,7 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
 
         this.state = {
             canvasHeight: INITIAL_CANVAS_HEIGHT,
-            canvasWidth: INITIAL_CANVAS_WIDTH,
+            canvasWidth: window.innerWidth * VIEW_PORT_SCALE,
             highlightedChars: INITIAL_HIGHLIGHTED_CHARS,
             highlightedWords: INITIAL_HIGHLIGHTED_WORDS,
             pointerPosition: {
@@ -45,11 +45,22 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
 
             this.prepareDataAndRender();
         }
+
+        window.addEventListener('resize', () => {
+            this.setState({
+                canvasWidth: window.innerWidth * VIEW_PORT_SCALE
+            });
+        });
     }
 
     
-    public componentDidUpdate() {      
+    public componentDidUpdate() {     
+        const start = new Date().getMilliseconds(); 
         this.prepareDataAndRender();
+        const end = new Date().getMilliseconds();
+
+        // tslint:disable-next-line:no-console
+        console.log((end - start) + ' ms');
     }
     
     public render() {
