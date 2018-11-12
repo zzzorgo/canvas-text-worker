@@ -1,7 +1,7 @@
 import { CanvasElement, ICanvasParams, IRect } from '../CanvasElement';
-import { BACKGROUND_COLOR } from '../constants';
+import { BACKGROUND_COLOR, FillStyle } from '../constants';
 
-export function fillRect(ctx: CanvasRenderingContext2D, rect: IRect, fillStyle:  string | CanvasGradient | CanvasPattern, alpha: number) {
+export function fillRect(ctx: CanvasRenderingContext2D, rect: IRect, fillStyle: FillStyle, alpha: number) {
     const {x, y, width, height} = rect;
         ctx.save();
         ctx.fillStyle = fillStyle;

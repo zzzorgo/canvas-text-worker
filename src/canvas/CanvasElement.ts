@@ -1,4 +1,4 @@
-import { VIEW_PORT_SCALE } from './constants';
+import { MouseEvent, VIEW_PORT_SCALE } from './constants';
 
 export interface IPoint {
     x: number,
@@ -30,11 +30,19 @@ export abstract class CanvasElement {
 
     public getIsHit = () => this.isHit;
 
-    public onClick = (e: React.MouseEvent<HTMLElement>) => {
+    public onClick = (e: MouseEvent) => {
         return;
     }
 
-    public onContextMenu = (e: React.MouseEvent<HTMLElement>) => {
+    public onMouseDown = (e: MouseEvent) => {
+        return;
+    }
+
+    public onMouseUp = (e: MouseEvent) => {
+        return;
+    }
+
+    public onContextMenu = (e: MouseEvent) => {
         return;
     }
 

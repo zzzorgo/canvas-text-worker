@@ -8,6 +8,7 @@ export const INITIAL_HIGHLIGHTED_CHARS: number[] = [2, 3, 5];
 export const INITIAL_HIGHLIGHTED_WORDS: number[] = [10, 20];
 
 export type MouseEvent = React.MouseEvent<HTMLElement>;
+export type FillStyle = string | CanvasGradient | CanvasPattern;
 
 export const BACKGROUND_COLOR = 'silver';
 export const TEXT_COLOR = 'black';

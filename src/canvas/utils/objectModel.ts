@@ -16,7 +16,7 @@ export function setHitElements(ctx: CanvasRenderingContext2D, elements: CanvasEl
 const WORD_REG = /([\w\dА-Яа-яёЁ]+)/;
 const SPLIT_TEXT_REG = /([^\w\dА-Яа-яёЁ]+)|([\w\dА-Яа-яёЁ]+)/g;
 
-export function getElementsFromText(canvasParams: ICanvasParams, text: string, wordPlugins: RenderPlugin[] = [],  charPlugins: RenderPlugin[] = []): TextCanvasElement[] {
+export function getElementsFromText(canvasParams: ICanvasParams, text: string, wordPlugin: RenderPlugin,  charPlugin: RenderPlugin): TextCanvasElement[] {
     const LINE_HEIGHT = 50 * VIEW_PORT_SCALE;
     const TEXT_MARGIN = 10 * VIEW_PORT_SCALE;
     const FONT_SIZE = LINE_HEIGHT / 1.25;
@@ -53,7 +53,9 @@ export function getElementsFromText(canvasParams: ICanvasParams, text: string, w
         block.rawText = rawBlock;
         block.index = blockIndex;
         
-        wordPlugins.forEach(plugin => plugin(block));
+        if (wordPlugin) {
+            wordPlugin(block);
+        }
 
         rawBlock.split('').reduce((offsetX, rawChar, blockCharIndex) => {
             const char = new CharCanvasElement();
@@ -69,7 +71,9 @@ export function getElementsFromText(canvasParams: ICanvasParams, text: string, w
             char.rawChar = rawChar;
             char.index = globalCharIndex + blockCharIndex;
 
-            charPlugins.forEach(plugin => plugin(char));
+            if (charPlugin) {
+                charPlugin(char);
+            }
             
             block.children.push(char);
 
@@ -86,13 +90,13 @@ export function getElementsFromText(canvasParams: ICanvasParams, text: string, w
     return blocks;
 }
 
-export function handleElementClickEvents(eventName: string, elements: CanvasElement[], e: MouseEvent) {
+export function handleElementMouseEvents(eventName: string, elements: CanvasElement[], e: MouseEvent) {
     elements.forEach(element => {
         if (element.getIsHit()) {
             element[eventName](e);
         }
 
-        handleElementClickEvents(eventName, element.children, e);
+        handleElementMouseEvents(eventName, element.children, e);
     });
 }
 

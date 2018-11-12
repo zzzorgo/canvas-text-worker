@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { CanvasContainer } from './CanvasContainer';
-import { CanvasElement, ICanvasParams, IIndexedCanvasElement } from './CanvasElement';
+import { CanvasElement, ICanvasParams, IIndexedCanvasElement, IPoint } from './CanvasElement';
 import { INITIAL_HIGHLIGHTED_CHARS, INITIAL_HIGHLIGHTED_WORDS, TEXT } from './constants';
 import { CharCanvasElement } from './elements/CharCanvasElement';
 import { TextCanvasElement } from './elements/TextCanvasElement';
 import { highlightPlugin } from './plugins/highlight';
+import { hoverPlugin } from './plugins/hover';
+import { setIsHitPlugin } from './plugins/setIsHit';
 import { getElementsFromText, toggleArrayElement } from './utils/objectModel';
 
 export type RenderPlugin = (element: CanvasElement) => void;
@@ -12,6 +14,7 @@ export type RenderPlugin = (element: CanvasElement) => void;
 interface IMyComponentState {
     highlightedChars: number[],
     highlightedWords: number[],
+    pointerPosition: IPoint,
     text: string
 }
 
@@ -22,21 +25,31 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
         this.state = {
             highlightedChars: INITIAL_HIGHLIGHTED_CHARS,
             highlightedWords: INITIAL_HIGHLIGHTED_WORDS,
+            pointerPosition: {x: -1, y: -1},
             text: TEXT
         }
     }  
 
     public render() {
-        return <CanvasContainer prepareObjectModel={this.prepareObjectModel} />
+        return <CanvasContainer 
+            prepareObjectModel={this.prepareObjectModel}
+            setPointerPosition={this.setPointerPosition} 
+            pointerPosition={this.state.pointerPosition} />
     }
 
-    private charHighlightPlugin = (char: IIndexedCanvasElement) => {
-        const { highlightedChars } = this.state;
+    private setPointerPosition = (pointerPosition: IPoint) => {
+        this.setState({pointerPosition});
+    }
 
+    private charPlugin = (char: IIndexedCanvasElement) => {
+        const { highlightedChars, pointerPosition } = this.state;
+
+        setIsHitPlugin(char, pointerPosition);
         highlightPlugin(highlightedChars, char);
+        hoverPlugin(char);
     }
     
-    private wordHighlightPlugin = (word: IIndexedCanvasElement) => {
+    private wordPlugin = (word: IIndexedCanvasElement) => {
         const { highlightedWords } = this.state;
 
         highlightPlugin(highlightedWords, word);
@@ -45,7 +58,7 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
     private prepareObjectModel = (canvasParams: ICanvasParams) => {
         const { text } = this.state;
         
-        const elements = getElementsFromText(canvasParams, text, [this.wordHighlightPlugin], [this.charHighlightPlugin]);
+        const elements = getElementsFromText(canvasParams, text, this.wordPlugin, this.charPlugin);
         this.bindEventHandlers(elements);
 
         return elements;
@@ -59,7 +72,7 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
 
             word.children.forEach(char => {
                 if (char instanceof CharCanvasElement) {
-                    char.onClick = this.getCharClickHandler(char);
+                    char.onMouseDown = this.getCharClickHandler(char);
                 }
             }
         )});
