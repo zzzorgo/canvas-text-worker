@@ -1,7 +1,7 @@
-import { CanvasElement, ICanvasParams } from './CanvasElement';
+import { CanvasElement, ICanvasParams, IIndexedCanvasElement } from './CanvasElement';
 import { fillRect } from './utils/render';
 
-export class TextCanvasElement extends CanvasElement {
+export class TextCanvasElement extends CanvasElement implements IIndexedCanvasElement {
     public rawText: string;
     public children: CanvasElement[] = [];
     public index: number;

@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { CanvasElement, IPoint } from './CanvasElement';
+import { CanvasElement, IIndexedCanvasElement, IPoint } from './CanvasElement';
 import { CharCanvasElement } from './CharCanvasElement';
 import { INITIAL_CANVAS_HEIGHT, INITIAL_HIGHLIGHTED_CHARS, INITIAL_HIGHLIGHTED_WORDS, MouseEvent, TEXT, VIEW_PORT_SCALE } from './constants';
-import { RectHighlightCanvasElement } from './RectHighlightCanvasElement';
+import { highlightPlugin } from './plugins/highlight';
 import { TextCanvasElement } from './TextCanvasElement';
 import { getElementsFromText, handleElementClickEvents, setHitElements, toggleArrayElement } from './utils/data';
 import { clearCanvas, renderWithChildren } from './utils/render';
@@ -46,25 +46,24 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
             this.prepareDataAndRender();
         }
 
-        window.addEventListener('resize', () => {
-            this.setState({
-                canvasWidth: window.innerWidth * VIEW_PORT_SCALE
-            });
-        });
+        window.addEventListener('resize', this.handleResize);
     }
 
-    
     public componentDidUpdate() {     
         const start = new Date().getMilliseconds(); 
         this.prepareDataAndRender();
         const end = new Date().getMilliseconds();
-
         // tslint:disable-next-line:no-console
         console.log((end - start) + ' ms');
+    }
+
+    public componentWillUnmount() {
+        window.removeEventListener('resize', this.handleResize);
     }
     
     public render() {
         const { canvasWidth, canvasHeight } = this.state;
+
         return (
             <canvas
                 onClick={this.handleCanvasClick}
@@ -79,62 +78,75 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
                 }} />
         );
     }   
-    
-    private charHighlightPlugin = (char: CharCanvasElement) => {
+
+    private handleResize = () => {
+        this.setState({
+            canvasWidth: window.innerWidth * VIEW_PORT_SCALE
+        });
+    }
+
+    private charHighlightPlugin = (char: IIndexedCanvasElement) => {
         const { highlightedChars } = this.state;
 
-        if (highlightedChars.includes(char.index)) {
-            const highlight = new RectHighlightCanvasElement();
-            highlight.rect = char.rect;
-
-            char.children.push(highlight);
-        }
-    };
-
-    private wordHighlightPlugin = (word: TextCanvasElement) => {
+        highlightPlugin(highlightedChars, char);
+    }
+    
+    private wordHighlightPlugin = (word: IIndexedCanvasElement) => {
         const { highlightedWords } = this.state;
 
-        if (highlightedWords.includes(word.index)) {
-            const highlight = new RectHighlightCanvasElement();
-            highlight.rect = word.rect;
-
-            word.children.push(highlight);
-        }
-    };
+        highlightPlugin(highlightedWords, word);
+    }
 
     private prepareDataAndRender() {
         const { ctx } = this;
         if (!ctx) { return; }
         const { text, pointerPosition, canvasWidth, canvasHeight } = this.state;
         const canvasParams = {ctx, width: canvasWidth, height: canvasHeight};
-
+        
         this.elements = getElementsFromText(canvasParams, text, [this.wordHighlightPlugin], [this.charHighlightPlugin]);
         this.bindEventHandlers(this.elements);
-
         setHitElements(ctx, this.elements, pointerPosition);
+        
         this.renderOnCanvas(ctx, this.elements);
     }
+    
+    private renderOnCanvas(ctx: CanvasRenderingContext2D | null, elements: CanvasElement[]) {
+        if (!ctx) { return; }
 
+        const { canvasWidth, canvasHeight } = this.state;
+        const canvasParams = {ctx, width: canvasWidth, height: canvasHeight};
+
+        clearCanvas(canvasParams);
+
+        elements.forEach(element => {
+            renderWithChildren(canvasParams, element);
+        });
+    }
+    
     private bindEventHandlers = (elements: CanvasElement[]) => {
         elements.forEach(word => {
             if (word instanceof TextCanvasElement) {
-                word.onContextMenu = (e: MouseEvent) => {
-                    this.setState({
-                        highlightedWords: toggleArrayElement(this.state.highlightedWords, word.index)
-                    });
-                };
+                word.onContextMenu = this.getWordContexMenuHandler(word);
             }
 
             word.children.forEach(char => {
                 if (char instanceof CharCanvasElement) {
-                    char.onClick = (e: MouseEvent) => {
-                        this.setState({
-                            highlightedChars: toggleArrayElement(this.state.highlightedChars, char.index)
-                        });
-                    }
+                    char.onClick = this.getCharClickHandler(char);
                 }
             }
         )});
+    }
+
+    private getCharClickHandler = (char: CharCanvasElement) => () => {
+        this.setState({
+            highlightedChars: toggleArrayElement(this.state.highlightedChars, char.index)
+        });
+    }
+
+    private getWordContexMenuHandler = (word: TextCanvasElement) => () => {
+        this.setState({
+            highlightedWords: toggleArrayElement(this.state.highlightedWords, word.index)
+        });
     }
 
     private handleCanvasClick = (e: MouseEvent) => {
@@ -150,17 +162,4 @@ export class CanvasContainer extends React.Component<{}, ICanvasContainerState> 
         const { clientX, clientY } = e;
         this.setState({pointerPosition: {x: clientX, y: clientY}});
     };
-
-    private renderOnCanvas(ctx: CanvasRenderingContext2D | null, elements: CanvasElement[]) {
-        if (!ctx) { return; }
-
-        const { canvasWidth, canvasHeight } = this.state;
-        const canvasParams = {ctx, width: canvasWidth, height: canvasHeight};
-
-        clearCanvas(canvasParams);
-
-        elements.forEach(element => {
-            renderWithChildren(canvasParams, element);
-        });
-    }
 }

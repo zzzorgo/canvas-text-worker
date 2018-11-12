@@ -51,3 +51,7 @@ export abstract class CanvasElement {
         return hitByX && hitByY;
     }
 }
+
+export interface IIndexedCanvasElement extends CanvasElement {
+    index: number
+}

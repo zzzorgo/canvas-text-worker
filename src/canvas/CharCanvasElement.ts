@@ -1,8 +1,8 @@
-import { CanvasElement, ICanvasParams } from './CanvasElement';
+import { CanvasElement, ICanvasParams, IIndexedCanvasElement } from './CanvasElement';
 import { TEXT_COLOR } from './constants';
 import { fillRect } from './utils/render';
 
-export class CharCanvasElement extends CanvasElement {
+export class CharCanvasElement extends CanvasElement implements IIndexedCanvasElement {
     public rawChar: string;
     public index: number;
 
