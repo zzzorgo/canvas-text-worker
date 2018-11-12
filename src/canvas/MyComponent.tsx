@@ -33,8 +33,7 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
     public render() {
         return <CanvasContainer 
             prepareObjectModel={this.prepareObjectModel}
-            setPointerPosition={this.setPointerPosition} 
-            pointerPosition={this.state.pointerPosition} />
+            setPointerPosition={this.setPointerPosition} />
     }
 
     private setPointerPosition = (pointerPosition: IPoint) => {
@@ -50,8 +49,9 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
     }
     
     private wordPlugin = (word: IIndexedCanvasElement) => {
-        const { highlightedWords } = this.state;
+        const { highlightedWords, pointerPosition } = this.state;
 
+        setIsHitPlugin(word, pointerPosition);
         highlightPlugin(highlightedWords, word);
     }
 

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { CanvasElement, ICanvasParams, IPoint } from './CanvasElement';
 import { INITIAL_CANVAS_HEIGHT, MouseEvent, VIEW_PORT_SCALE } from './constants';
-import { handleElementMouseEvents, setHitElements } from './utils/objectModel';
+import { handleElementMouseEvents } from './utils/objectModel';
 import { clearCanvas, renderWithChildren } from './utils/render';
 
 export type RenderPlugin = (element: CanvasElement) => void;
@@ -13,8 +13,7 @@ interface ICanvasContainerState {
 
 interface ICanvasContainerProps {
     prepareObjectModel: (canvasParams: ICanvasParams) => CanvasElement[],
-    setPointerPosition: (pointerPosition: IPoint) => void,
-    pointerPosition: IPoint
+    setPointerPosition: (pointerPosition: IPoint) => void
 }
 
 export class CanvasContainer extends React.Component<ICanvasContainerProps, ICanvasContainerState> {
@@ -81,13 +80,12 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
         const { ctx } = this;
         if (!ctx) { return; }
 
-        const { prepareObjectModel, pointerPosition } = this.props;
+        const { prepareObjectModel } = this.props;
         const { canvasWidth, canvasHeight } = this.state;
         const canvasParams = {ctx, width: canvasWidth, height: canvasHeight};
 
         const elements = prepareObjectModel(canvasParams);
         this.elements = elements;
-        setHitElements(ctx, elements, pointerPosition);
         this.renderOnCanvas(canvasParams, elements);
     }
     
