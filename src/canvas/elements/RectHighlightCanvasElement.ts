@@ -1,5 +1,5 @@
-import { CanvasElement, ICanvasParams } from './CanvasElement';
-import { fillRect } from './utils/render';
+import { CanvasElement, ICanvasParams } from '../CanvasElement';
+import { fillRect } from '../utils/render';
 
 export class RectHighlightCanvasElement extends CanvasElement {
     public render(canvasParams: ICanvasParams) {

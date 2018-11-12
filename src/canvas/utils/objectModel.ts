@@ -1,8 +1,8 @@
 import { RenderPlugin } from '../CanvasContainer';
 import { CanvasElement, ICanvasParams, IPoint } from '../CanvasElement';
-import { CharCanvasElement } from '../CharCanvasElement';
-import { VIEW_PORT_SCALE } from '../constants';
-import { TextCanvasElement } from '../TextCanvasElement';
+import { MouseEvent, VIEW_PORT_SCALE } from '../constants';
+import { CharCanvasElement } from '../elements/CharCanvasElement';
+import { TextCanvasElement } from '../elements/TextCanvasElement';
 
 export function setHitElements(ctx: CanvasRenderingContext2D, elements: CanvasElement[], pointer: IPoint) {
     const {x, y} = pointer;
@@ -86,7 +86,7 @@ export function getElementsFromText(canvasParams: ICanvasParams, text: string, w
     return blocks;
 }
 
-export function handleElementClickEvents(eventName: string, elements: CanvasElement[], e: React.MouseEvent<HTMLElement>) {
+export function handleElementClickEvents(eventName: string, elements: CanvasElement[], e: MouseEvent) {
     elements.forEach(element => {
         if (element.getIsHit()) {
             element[eventName](e);

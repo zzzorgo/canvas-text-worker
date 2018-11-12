@@ -1,13 +1,13 @@
 import * as React from 'react';
 import './App.css';
 
-import { CanvasContainer } from './canvas/CanvasContainer';
+import { MyComponent } from './canvas/MyComponent';
 
 class App extends React.Component {
     public render() {
         return (
             <div className="App">
-                <CanvasContainer />
+                <MyComponent />
             </div>
         );
     }
