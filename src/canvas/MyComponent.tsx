@@ -53,6 +53,7 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
 
         setIsHitPlugin(word, pointerPosition);
         highlightPlugin(highlightedWords, word);
+        hoverPlugin(word, 'black', 0.1);
     }
 
     private prepareObjectModel = (canvasParams: ICanvasParams) => {
