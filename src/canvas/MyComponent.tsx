@@ -1,3 +1,4 @@
+import * as _ from 'lodash';
 import * as React from 'react';
 import { CanvasContainer } from './CanvasContainer';
 import { CanvasElement, ICanvasParams, IPoint } from './CanvasElement';
@@ -21,6 +22,8 @@ interface IMyComponentState {
 export class MyComponent extends React.Component<{}, IMyComponentState> {
     private shouldAddHighlightChars: boolean;
     private shouldRemoveHighlightChars: boolean;
+    private highlightStart: number;
+    private highlightEnd: number;
 
     constructor(props: {}) {
         super(props);
@@ -85,42 +88,62 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
     }
 
     private getCharMouseMoveHandler = (char: CharCanvasElement) => () => {
-        if (char.getIsHit()) {
-            this.toggleHighlightedChar(char);
+        this.lolo(char);
+    };
+
+    private lolo = (char: CharCanvasElement) => {
+        const { highlightedChars } = this.state;
+
+        this.highlightEnd = char.index;
+
+        let leftIndex;
+        let rightIndex;
+
+        if (this.highlightStart < this.highlightEnd) {
+            leftIndex = this.highlightStart;
+            rightIndex = this.highlightEnd;
+        } else {
+            leftIndex = this.highlightEnd;
+            rightIndex = this.highlightStart;
         }
+        
+        const changedHighlightedChars = [];
+
+        for (let index = leftIndex; index <= rightIndex; index++) {
+            changedHighlightedChars.push(index);
+        }
+
+        let newHighlightedChars: number[] = [];
+        if (this.shouldRemoveHighlightChars) {
+            newHighlightedChars = _.without(highlightedChars, ...changedHighlightedChars);
+        } else if (this.shouldAddHighlightChars) {
+            newHighlightedChars = _.union(highlightedChars, changedHighlightedChars);
+        } else {
+            return;
+        }
+        
+        this.setState({highlightedChars: newHighlightedChars});
     }
 
     private getCharMouseDownHandler = (char: CharCanvasElement) => () => {
         const { highlightedChars } = this.state;
         const alreadyHighlighted = highlightedChars.includes(char.index);
 
+        this.highlightStart = char.index;
         this.shouldAddHighlightChars = !alreadyHighlighted;
         this.shouldRemoveHighlightChars = alreadyHighlighted;
     }
 
     private getCharMouseUpHandler = (char: CharCanvasElement) => () => {       
-        this.toggleHighlightedChar(char);
+        this.lolo(char);
+
         this.shouldAddHighlightChars = false;
         this.shouldRemoveHighlightChars = false;
-    }
-
-    private toggleHighlightedChar(char: CharCanvasElement) {
-        const { highlightedChars } = this.state;
-
-        if (this.shouldAddHighlightChars) {
-            this.setState({
-                highlightedChars: [...highlightedChars, char.index]
-            });
-        } else if (this.shouldRemoveHighlightChars) {
-            this.setState({
-                highlightedChars: highlightedChars.filter(charIndex => charIndex !== char.index)
-            });
-        }
     }
 
     private getWordContexMenuHandler = (word: TextCanvasElement) => () => {
         this.setState({
             highlightedWords: toggleArrayElement(this.state.highlightedWords, word.index)
         });
-    }
+    }   
 }
