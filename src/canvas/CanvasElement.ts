@@ -42,6 +42,10 @@ export abstract class CanvasElement {
         return;
     }
 
+    public onMouseMove = (e: MouseEvent) => {
+        return;
+    }
+
     public onContextMenu = (e: MouseEvent) => {
         return;
     }

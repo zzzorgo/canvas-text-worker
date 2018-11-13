@@ -13,7 +13,7 @@ interface ICanvasContainerState {
 
 interface ICanvasContainerProps {
     prepareObjectModel: (canvasParams: ICanvasParams) => CanvasElement[],
-    setPointerPosition: (pointerPosition: IPoint) => void
+    onMouseMove: (pointerPosition: IPoint) => void
 }
 
 export class CanvasContainer extends React.Component<ICanvasContainerProps, ICanvasContainerState> {
@@ -115,8 +115,9 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
     };
 
     private handleCanvasMouseMove = (e: MouseEvent) => {
-        const { setPointerPosition } = this.props;
+        const { onMouseMove } = this.props;
         const pointerPosition = {x: e.clientX, y: e.clientY};
-        setPointerPosition(pointerPosition);
+        onMouseMove(pointerPosition);
+        handleElementMouseEvents('onMouseMove', this.elements, e);
     };
 }
