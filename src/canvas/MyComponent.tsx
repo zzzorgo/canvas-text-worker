@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { CanvasContainer } from './CanvasContainer';
-import { CanvasElement, ICanvasParams, IIndexedCanvasElement, IPoint } from './CanvasElement';
+import { CanvasElement, ICanvasParams, IPoint } from './CanvasElement';
 import { INITIAL_HIGHLIGHTED_CHARS, INITIAL_HIGHLIGHTED_WORDS, TEXT } from './constants';
 import { CharCanvasElement } from './elements/CharCanvasElement';
 import { TextCanvasElement } from './elements/TextCanvasElement';
@@ -43,7 +43,7 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
         this.setState({pointerPosition});
     }
 
-    private charPlugin = (char: IIndexedCanvasElement) => {
+    private charPlugin = (char: CharCanvasElement) => {
         const { highlightedChars, pointerPosition } = this.state;
 
         setIsHitPlugin(char, pointerPosition);
@@ -51,7 +51,7 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
         hoverPlugin(char);
     }
     
-    private wordPlugin = (word: IIndexedCanvasElement) => {
+    private wordPlugin = (word: TextCanvasElement) => {
         const { highlightedWords, pointerPosition } = this.state;
 
         setIsHitPlugin(word, pointerPosition);
@@ -77,14 +77,14 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
             word.children.forEach(char => {
                 if (char instanceof CharCanvasElement) {
                     char.onMouseDown = this.getCharMouseDownHandler(char);
-                    char.onMouseMove = this.getCharMoveHandler(char);
+                    char.onMouseMove = this.getCharMouseMoveHandler(char);
                     char.onMouseUp = this.getCharMouseUpHandler(char);
                 }
             }
         )});
     }
 
-    private getCharMoveHandler = (char: CharCanvasElement) => () => {
+    private getCharMouseMoveHandler = (char: CharCanvasElement) => () => {
         if (char.getIsHit()) {
             this.toggleHighlightedChar(char);
         }
