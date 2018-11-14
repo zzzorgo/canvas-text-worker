@@ -19,11 +19,24 @@ interface IMyComponentState {
     text: string
 }
 
+enum HighlightingMode {
+    STAND_BY,
+    ADDING,
+    REMOVING
+}
+
+interface IHighlightingState {
+    end: number;
+    mode: HighlightingMode;
+    start: number;
+}
+
 export class MyComponent extends React.Component<{}, IMyComponentState> {
-    private shouldAddHighlightChars: boolean;
-    private shouldRemoveHighlightChars: boolean;
-    private highlightStart: number;
-    private highlightEnd: number;
+    private hilightingState: IHighlightingState = {
+        end: -1,
+        mode: HighlightingMode.STAND_BY,
+        start: -1
+    };
 
     constructor(props: {}) {
         super(props);
@@ -34,10 +47,10 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
             pointerPosition: {x: -1, y: -1},
             text: TEXT
         }
-    }  
+    }
 
     public render() {
-        return <CanvasContainer 
+        return <CanvasContainer
             prepareObjectModel={this.prepareObjectModel}
             onMouseMove={this.setPointerPosition} />
     }
@@ -53,7 +66,7 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
         highlightPlugin(char, highlightedChars);
         hoverPlugin(char);
     }
-    
+
     private wordPlugin = (word: TextCanvasElement) => {
         const { highlightedWords, pointerPosition } = this.state;
 
@@ -64,13 +77,13 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
 
     private prepareObjectModel = (canvasParams: ICanvasParams) => {
         const { text } = this.state;
-        
+
         const elements = getElementsFromText(canvasParams, text, this.wordPlugin, this.charPlugin);
         this.bindEventHandlers(elements);
 
         return elements;
     }
-    
+
     private bindEventHandlers = (elements: CanvasElement[]) => {
         elements.forEach(word => {
             if (word instanceof TextCanvasElement) {
@@ -87,63 +100,67 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
         )});
     }
 
-    private getCharMouseMoveHandler = (char: CharCanvasElement) => () => {
-        this.lolo(char);
+
+    private getChangedHighlightedChars = (char: CharCanvasElement) => {
+        const changedHighlightedChars = [];
+        this.hilightingState.end = char.index;
+        const { start, end } = this.hilightingState;
+
+        if (start < end) {
+            for (let index = start; index <= end; index++) {
+                changedHighlightedChars.push(index);
+            }
+        } else {
+            for (let index = start; index >= end; index--) {
+                changedHighlightedChars.push(index);
+            }
+        }
+
+        return changedHighlightedChars;
     };
 
-    private lolo = (char: CharCanvasElement) => {
+    private getNewHighlightedChars = (char: CharCanvasElement) => {
         const { highlightedChars } = this.state;
+        let newHighlightedChars: number[] = highlightedChars;
+        const changedHighlightedChars = this.getChangedHighlightedChars(char);
 
-        this.highlightEnd = char.index;
-
-        let leftIndex;
-        let rightIndex;
-
-        if (this.highlightStart < this.highlightEnd) {
-            leftIndex = this.highlightStart;
-            rightIndex = this.highlightEnd;
-        } else {
-            leftIndex = this.highlightEnd;
-            rightIndex = this.highlightStart;
-        }
-        
-        const changedHighlightedChars = [];
-
-        for (let index = leftIndex; index <= rightIndex; index++) {
-            changedHighlightedChars.push(index);
-        }
-
-        let newHighlightedChars: number[] = [];
-        if (this.shouldRemoveHighlightChars) {
+        if (this.hilightingState.mode === HighlightingMode.REMOVING) {
             newHighlightedChars = _.without(highlightedChars, ...changedHighlightedChars);
-        } else if (this.shouldAddHighlightChars) {
+        } else if (this.hilightingState.mode === HighlightingMode.ADDING) {
             newHighlightedChars = _.union(highlightedChars, changedHighlightedChars);
-        } else {
-            return;
         }
-        
+
+        return newHighlightedChars;
+    };
+
+    private updateHighlightedChars = (char: CharCanvasElement) => {
+        const newHighlightedChars = this.getNewHighlightedChars(char);
         this.setState({highlightedChars: newHighlightedChars});
-    }
+    };
+
+    /// Event handlers
+
+    private getCharMouseMoveHandler = (char: CharCanvasElement) => () => {
+        this.updateHighlightedChars(char);
+    };
 
     private getCharMouseDownHandler = (char: CharCanvasElement) => () => {
         const { highlightedChars } = this.state;
         const alreadyHighlighted = highlightedChars.includes(char.index);
 
-        this.highlightStart = char.index;
-        this.shouldAddHighlightChars = !alreadyHighlighted;
-        this.shouldRemoveHighlightChars = alreadyHighlighted;
+        this.hilightingState.start = char.index;
+        this.hilightingState.mode = alreadyHighlighted ? HighlightingMode.REMOVING : HighlightingMode.ADDING;
     }
 
-    private getCharMouseUpHandler = (char: CharCanvasElement) => () => {       
-        this.lolo(char);
+    private getCharMouseUpHandler = (char: CharCanvasElement) => () => {
+        this.updateHighlightedChars(char);
 
-        this.shouldAddHighlightChars = false;
-        this.shouldRemoveHighlightChars = false;
+        this.hilightingState.mode = HighlightingMode.STAND_BY;
     }
 
     private getWordContexMenuHandler = (word: TextCanvasElement) => () => {
         this.setState({
             highlightedWords: toggleArrayElement(this.state.highlightedWords, word.index)
         });
-    }   
+    }
 }
