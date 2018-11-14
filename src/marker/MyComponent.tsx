@@ -1,14 +1,15 @@
 import * as _ from 'lodash';
 import * as React from 'react';
-import { CanvasContainer } from './CanvasContainer';
-import { CanvasElement, ICanvasParams, IPoint } from './CanvasElement';
-import { INITIAL_HIGHLIGHTED_CHARS, INITIAL_HIGHLIGHTED_WORDS, TEXT } from './constants';
-import { CharCanvasElement } from './elements/CharCanvasElement';
-import { TextCanvasElement } from './elements/TextCanvasElement';
-import { highlightPlugin } from './plugins/highlight';
-import { hoverPlugin } from './plugins/hover';
-import { setIsHitPlugin } from './plugins/setIsHit';
-import { getElementsFromText, toggleArrayElement } from './utils/objectModel';
+import { CanvasContainer } from '../canvas/CanvasContainer';
+import { CanvasElement, ICanvasParams, IPoint } from '../canvas/CanvasElement';
+import { INITIAL_HIGHLIGHTED_CHARS, INITIAL_HIGHLIGHTED_WORDS, TEXT } from '../canvas/constants';
+import { CharCanvasElement } from '../canvas/elements/CharCanvasElement';
+import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
+import { highlightPlugin } from '../canvas/plugins/highlight';
+import { hoverPlugin } from '../canvas/plugins/hover';
+import { setIsHitPlugin } from '../canvas/plugins/setIsHit';
+import { getElementsFromText, toggleArrayElement } from '../canvas/utils/objectModel';
+import { HighlightingMode, HighlightingState } from './HighlightingState';
 
 export type RenderPlugin = (element: CanvasElement) => void;
 
@@ -19,24 +20,8 @@ interface IMyComponentState {
     text: string
 }
 
-enum HighlightingMode {
-    STAND_BY,
-    ADDING,
-    REMOVING
-}
-
-interface IHighlightingState {
-    end: number;
-    mode: HighlightingMode;
-    start: number;
-}
-
 export class MyComponent extends React.Component<{}, IMyComponentState> {
-    private hilightingState: IHighlightingState = {
-        end: -1,
-        mode: HighlightingMode.STAND_BY,
-        start: -1
-    };
+    private hilightingState: HighlightingState = new HighlightingState();
 
     constructor(props: {}) {
         super(props);
@@ -100,61 +85,29 @@ export class MyComponent extends React.Component<{}, IMyComponentState> {
         )});
     }
 
-
-    private getChangedHighlightedChars = (char: CharCanvasElement) => {
-        const changedHighlightedChars = [];
-        this.hilightingState.end = char.index;
-        const { start, end } = this.hilightingState;
-
-        if (start < end) {
-            for (let index = start; index <= end; index++) {
-                changedHighlightedChars.push(index);
-            }
-        } else {
-            for (let index = start; index >= end; index--) {
-                changedHighlightedChars.push(index);
-            }
-        }
-
-        return changedHighlightedChars;
-    };
-
-    private getNewHighlightedChars = (char: CharCanvasElement) => {
-        const { highlightedChars } = this.state;
-        let newHighlightedChars: number[] = highlightedChars;
-        const changedHighlightedChars = this.getChangedHighlightedChars(char);
-
-        if (this.hilightingState.mode === HighlightingMode.REMOVING) {
-            newHighlightedChars = _.without(highlightedChars, ...changedHighlightedChars);
-        } else if (this.hilightingState.mode === HighlightingMode.ADDING) {
-            newHighlightedChars = _.union(highlightedChars, changedHighlightedChars);
-        }
-
-        return newHighlightedChars;
-    };
-
     private updateHighlightedChars = (char: CharCanvasElement) => {
-        const newHighlightedChars = this.getNewHighlightedChars(char);
+        const { highlightedChars } = this.state;
+
+        const newHighlightedChars = this.hilightingState.getNewHighlightedChars(char.index, highlightedChars);
         this.setState({highlightedChars: newHighlightedChars});
     };
 
     /// Event handlers
 
-    private getCharMouseMoveHandler = (char: CharCanvasElement) => () => {
-        this.updateHighlightedChars(char);
-    };
-
     private getCharMouseDownHandler = (char: CharCanvasElement) => () => {
         const { highlightedChars } = this.state;
         const alreadyHighlighted = highlightedChars.includes(char.index);
-
+        
         this.hilightingState.start = char.index;
         this.hilightingState.mode = alreadyHighlighted ? HighlightingMode.REMOVING : HighlightingMode.ADDING;
     }
-
+    
+    private getCharMouseMoveHandler = (char: CharCanvasElement) => () => {
+        this.updateHighlightedChars(char);
+    };
+  
     private getCharMouseUpHandler = (char: CharCanvasElement) => () => {
         this.updateHighlightedChars(char);
-
         this.hilightingState.mode = HighlightingMode.STAND_BY;
     }
 

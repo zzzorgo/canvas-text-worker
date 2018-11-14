@@ -1,7 +1,7 @@
 import * as React from 'react';
 import './App.css';
 
-import { MyComponent } from './canvas/MyComponent';
+import { MyComponent } from './marker/MyComponent';
 
 class App extends React.Component {
     public render() {
