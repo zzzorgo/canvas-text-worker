@@ -13,14 +13,14 @@ import { HighlightingMode, HighlightingState } from './HighlightingState';
 
 export type RenderPlugin = (element: CanvasElement) => void;
 
-interface IMyComponentState {
+interface IMarkerHighlightState {
     highlightedChars: number[],
     highlightedWords: number[],
     pointerPosition: IPoint,
     text: string
 }
 
-export class MyComponent extends React.Component<{}, IMyComponentState> {
+export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> {
     private hilightingState: HighlightingState = new HighlightingState();
 
     constructor(props: {}) {

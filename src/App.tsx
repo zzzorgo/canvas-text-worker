@@ -1,13 +1,13 @@
 import * as React from 'react';
 import './App.css';
 
-import { MyComponent } from './marker/MyComponent';
+import { MarkerHighlight } from './marker/MarkerHihghlight';
 
 class App extends React.Component {
     public render() {
         return (
             <div className="App">
-                <MyComponent />
+                <MarkerHighlight />
             </div>
         );
     }
