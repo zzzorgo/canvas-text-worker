@@ -57,11 +57,11 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
                 <CanvasContainer
                     prepareObjectModel={this.prepareObjectModel}
                     onMouseMove={this.setPointerPosition} />
-                    <div style={{display: 'flex', justifyContent: 'center'}}>
-                        <button onClick={this.selectSimpleHighlight}>1</button>
-                        <button onClick={this.selectUnicodeHighlight}>2</button>
-                        <button onClick={this.selectUnderscoreHighlight}>3</button>
-                    </div>
+                <div style={{display: 'flex', justifyContent: 'center'}}>
+                    <button onClick={this.selectSimpleHighlight}>1</button>
+                    <button onClick={this.selectUnicodeHighlight}>2</button>
+                    <button onClick={this.selectUnderscoreHighlight}>3</button>
+                </div>
             </div>
         );
     }
