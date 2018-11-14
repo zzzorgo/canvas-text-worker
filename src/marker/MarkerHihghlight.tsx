@@ -1,22 +1,31 @@
 import * as _ from 'lodash';
 import * as React from 'react';
+import { unicodeBrushPlugin } from 'src/canvas/plugins/unicodeBrush';
 import { CanvasContainer } from '../canvas/CanvasContainer';
 import { CanvasElement, ICanvasParams, IPoint } from '../canvas/CanvasElement';
-import { INITIAL_HIGHLIGHTED_CHARS, INITIAL_HIGHLIGHTED_WORDS, TEXT } from '../canvas/constants';
+import { INITIAL_HIGHLIGHTED_WORDS, TEXT } from '../canvas/constants';
 import { CharCanvasElement } from '../canvas/elements/CharCanvasElement';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
-import { highlightPlugin } from '../canvas/plugins/highlight';
 import { hoverPlugin } from '../canvas/plugins/hover';
 import { setIsHitPlugin } from '../canvas/plugins/setIsHit';
+import { simpleBrushPlugin } from '../canvas/plugins/simpleBrush';
 import { getElementsFromText, toggleArrayElement } from '../canvas/utils/objectModel';
+import { HighlightBrusheTypes } from './HighlightBrush';
 import { HighlightingMode, HighlightingState } from './HighlightingState';
 
 export type RenderPlugin = (element: CanvasElement) => void;
 
+interface IBrushesState {
+    [HighlightBrusheTypes.NONE]: number[],
+    [HighlightBrusheTypes.SIMPLE]: number[],
+    [HighlightBrusheTypes.UNICODE]: number[]
+}
+
 interface IMarkerHighlightState {
-    highlightedChars: number[],
+    brushes: IBrushesState,
     highlightedWords: number[],
     pointerPosition: IPoint,
+    selectedBrush: HighlightBrusheTypes,
     text: string
 }
 
@@ -27,17 +36,30 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
         super(props);
 
         this.state = {
-            highlightedChars: INITIAL_HIGHLIGHTED_CHARS,
+            brushes: {
+                [HighlightBrusheTypes.NONE]: [],
+                [HighlightBrusheTypes.SIMPLE]: [],
+                [HighlightBrusheTypes.UNICODE]: []
+            },
             highlightedWords: INITIAL_HIGHLIGHTED_WORDS,
             pointerPosition: {x: -1, y: -1},
+            selectedBrush: HighlightBrusheTypes.NONE,
             text: TEXT
         }
     }
 
     public render() {
-        return <CanvasContainer
-            prepareObjectModel={this.prepareObjectModel}
-            onMouseMove={this.setPointerPosition} />
+        return (
+            <div>
+                <CanvasContainer
+                    prepareObjectModel={this.prepareObjectModel}
+                    onMouseMove={this.setPointerPosition} />
+                    <div style={{display: 'flex', justifyContent: 'center'}}>
+                        <button onClick={this.selectSimpleHighlight}>1</button>
+                        <button onClick={this.selectUnicodeHighlight}>2</button>
+                    </div>
+            </div>
+        );
     }
 
     private setPointerPosition = (pointerPosition: IPoint) => {
@@ -45,10 +67,11 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
     }
 
     private charPlugin = (char: CharCanvasElement) => {
-        const { highlightedChars, pointerPosition } = this.state;
+        const { brushes, pointerPosition } = this.state;
 
         setIsHitPlugin(char, pointerPosition);
-        highlightPlugin(char, highlightedChars);
+        simpleBrushPlugin(char, brushes[HighlightBrusheTypes.SIMPLE]);
+        unicodeBrushPlugin(char, brushes[HighlightBrusheTypes.UNICODE])
         hoverPlugin(char);
     }
 
@@ -56,7 +79,7 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
         const { highlightedWords, pointerPosition } = this.state;
 
         setIsHitPlugin(word, pointerPosition);
-        highlightPlugin(word, highlightedWords);
+        simpleBrushPlugin(word, highlightedWords);
         hoverPlugin(word, 'black', 0.1);
     }
 
@@ -86,17 +109,22 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
     }
 
     private updateHighlightedChars = (char: CharCanvasElement) => {
-        const { highlightedChars } = this.state;
+        const { brushes, selectedBrush } = this.state;
 
-        const newHighlightedChars = this.hilightingState.getNewHighlightedChars(char.index, highlightedChars);
-        this.setState({highlightedChars: newHighlightedChars});
+        const newHighlightedChars = this.hilightingState.getNewHighlightedChars(char.index, brushes[selectedBrush]);
+        const newBrushes = {
+            ...brushes,
+            [selectedBrush]: newHighlightedChars
+        };
+
+        this.setState({brushes: newBrushes});
     };
 
     /// Event handlers
 
     private getCharMouseDownHandler = (char: CharCanvasElement) => () => {
-        const { highlightedChars } = this.state;
-        const alreadyHighlighted = highlightedChars.includes(char.index);
+        const { brushes, selectedBrush } = this.state;
+        const alreadyHighlighted = brushes[selectedBrush].includes(char.index);
         
         this.hilightingState.start = char.index;
         this.hilightingState.mode = alreadyHighlighted ? HighlightingMode.REMOVING : HighlightingMode.ADDING;
@@ -116,4 +144,12 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
             highlightedWords: toggleArrayElement(this.state.highlightedWords, word.index)
         });
     }
+
+    private selectSimpleHighlight = () => {
+        this.setState({selectedBrush: HighlightBrusheTypes.SIMPLE});
+    };
+
+    private selectUnicodeHighlight = () => {
+        this.setState({selectedBrush: HighlightBrusheTypes.UNICODE});
+    };
 }
