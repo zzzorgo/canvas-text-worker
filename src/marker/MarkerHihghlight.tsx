@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
 import * as React from 'react';
+import { underscoreBrushPlugin } from 'src/canvas/plugins/underscoreBrush';
 import { unicodeBrushPlugin } from 'src/canvas/plugins/unicodeBrush';
 import { CanvasContainer } from '../canvas/CanvasContainer';
 import { CanvasElement, ICanvasParams, IPoint } from '../canvas/CanvasElement';
@@ -9,7 +10,7 @@ import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
 import { hoverPlugin } from '../canvas/plugins/hover';
 import { setIsHitPlugin } from '../canvas/plugins/setIsHit';
 import { simpleBrushPlugin } from '../canvas/plugins/simpleBrush';
-import { getElementsFromText, toggleArrayElement } from '../canvas/utils/objectModel';
+import { getElementsFromText, getTextParams, toggleArrayElement } from '../canvas/utils/objectModel';
 import { HighlightBrusheTypes } from './HighlightBrush';
 import { HighlightingMode, HighlightingState } from './HighlightingState';
 
@@ -18,7 +19,8 @@ export type RenderPlugin = (element: CanvasElement) => void;
 interface IBrushesState {
     [HighlightBrusheTypes.NONE]: number[],
     [HighlightBrusheTypes.SIMPLE]: number[],
-    [HighlightBrusheTypes.UNICODE]: number[]
+    [HighlightBrusheTypes.UNICODE]: number[],
+    [HighlightBrusheTypes.UNDERSCORE]: number[]
 }
 
 interface IMarkerHighlightState {
@@ -39,7 +41,8 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
             brushes: {
                 [HighlightBrusheTypes.NONE]: [],
                 [HighlightBrusheTypes.SIMPLE]: [],
-                [HighlightBrusheTypes.UNICODE]: []
+                [HighlightBrusheTypes.UNICODE]: [],
+                [HighlightBrusheTypes.UNDERSCORE]: []
             },
             highlightedWords: INITIAL_HIGHLIGHTED_WORDS,
             pointerPosition: {x: -1, y: -1},
@@ -57,6 +60,7 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
                     <div style={{display: 'flex', justifyContent: 'center'}}>
                         <button onClick={this.selectSimpleHighlight}>1</button>
                         <button onClick={this.selectUnicodeHighlight}>2</button>
+                        <button onClick={this.selectUnderscoreHighlight}>3</button>
                     </div>
             </div>
         );
@@ -66,13 +70,14 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
         this.setState({pointerPosition});
     }
 
-    private charPlugin = (char: CharCanvasElement) => {
+    private charPlugin = (char: CharCanvasElement, canvasParams: ICanvasParams) => {
         const { brushes, pointerPosition } = this.state;
 
         setIsHitPlugin(char, pointerPosition);
-        simpleBrushPlugin(char, brushes[HighlightBrusheTypes.SIMPLE]);
-        unicodeBrushPlugin(char, brushes[HighlightBrusheTypes.UNICODE])
         hoverPlugin(char);
+        simpleBrushPlugin(char, brushes[HighlightBrusheTypes.SIMPLE]);
+        unicodeBrushPlugin(char, brushes[HighlightBrusheTypes.UNICODE], canvasParams);
+        underscoreBrushPlugin(char, brushes[HighlightBrusheTypes.UNDERSCORE]);
     }
 
     private wordPlugin = (word: TextCanvasElement) => {
@@ -86,7 +91,7 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
     private prepareObjectModel = (canvasParams: ICanvasParams) => {
         const { text } = this.state;
 
-        const elements = getElementsFromText(canvasParams, text, this.wordPlugin, this.charPlugin);
+        const elements = getElementsFromText(canvasParams, getTextParams(text, 50, {x: 0, y: 0}), this.wordPlugin, this.charPlugin);
         this.bindEventHandlers(elements);
 
         return elements;
@@ -151,5 +156,9 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
 
     private selectUnicodeHighlight = () => {
         this.setState({selectedBrush: HighlightBrusheTypes.UNICODE});
+    };
+
+    private selectUnderscoreHighlight = () => {
+        this.setState({selectedBrush: HighlightBrusheTypes.UNDERSCORE});
     };
 }

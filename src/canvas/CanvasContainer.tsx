@@ -4,7 +4,7 @@ import { INITIAL_CANVAS_HEIGHT, MouseEvent, VIEW_PORT_SCALE } from './constants'
 import { handleElementMouseEvents } from './utils/objectModel';
 import { clearCanvas, renderWithChildren } from './utils/render';
 
-export type RenderPlugin = (element: CanvasElement) => void;
+export type RenderPlugin = (element: CanvasElement, canvasParams?: ICanvasParams) => void;
 
 interface ICanvasContainerState {
     canvasHeight: number,

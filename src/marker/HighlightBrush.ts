@@ -2,5 +2,6 @@
 export enum HighlightBrusheTypes {
     NONE = 'none',
     SIMPLE = 'simple',
-    UNICODE = 'unicode'
+    UNICODE = 'unicode',
+    UNDERSCORE = 'underscore'
 }

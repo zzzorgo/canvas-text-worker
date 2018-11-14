@@ -16,36 +16,53 @@ export function setHitElements(ctx: CanvasRenderingContext2D, elements: CanvasEl
 const WORD_REG = /([\w\dА-Яа-яёЁ]+)/;
 const SPLIT_TEXT_REG = /([^\w\dА-Яа-яёЁ]+)|([\w\dА-Яа-яёЁ]+)/g;
 
-export function getElementsFromText(canvasParams: ICanvasParams, text: string, wordPlugin: RenderPlugin,  charPlugin: RenderPlugin): TextCanvasElement[] {
-    const LINE_HEIGHT = 50 * VIEW_PORT_SCALE;
-    const TEXT_MARGIN = 10 * VIEW_PORT_SCALE;
-    const FONT_SIZE = LINE_HEIGHT / 1.25;
-    const FONT_SETTINGS = `100 normal ${FONT_SIZE}px 'Calibri'`;
+export interface ITextParams {
+    text: string,
+    lineHeight: number,
+    fontSize: number,
+    point: IPoint
+}
+
+export function getTextParams(text: string = '', fontSize: number = 12, point: IPoint, lineHeight?: number) {
+    return {
+        fontSize,
+        lineHeight: lineHeight || fontSize * 1.25,
+        point,
+        text
+    };
+}
+
+export function getElementsFromText(canvasParams: ICanvasParams, textParams: ITextParams, wordPlugin?: RenderPlugin,  charPlugin?: RenderPlugin): TextCanvasElement[] {
+    const lineHeight = textParams.lineHeight * VIEW_PORT_SCALE;
+    const TEXT_PADDING = textParams.point.x;
+    const fontSize = textParams.fontSize * VIEW_PORT_SCALE;
+    const FONT_SETTINGS = `100 normal ${fontSize}px 'Calibri'`;
     const { ctx, width: canvasWidth } = canvasParams;
     let globalCharIndex = 0;
 
     ctx.textBaseline = 'bottom';
+    ctx.save();
     ctx.font = FONT_SETTINGS;
 
-    const rawBlocks = text.match(SPLIT_TEXT_REG) || [];
+    const rawBlocks = textParams.text.match(SPLIT_TEXT_REG) || [];
     const blocks: TextCanvasElement[] = [];
 
     rawBlocks.reduce((offset, rawBlock, blockIndex) => {
         const blockWidth = ctx.measureText(rawBlock).width;
-        const blockIsTooBig = offset.x + blockWidth >= canvasWidth - TEXT_MARGIN;
+        const blockIsTooBig = offset.x + blockWidth >= canvasWidth;
         const isWordBlock = WORD_REG.test(rawBlock);
         const shouldBreakLine = blockIsTooBig && isWordBlock;
 
         if (shouldBreakLine) {
-            offset.y += LINE_HEIGHT; 
-            offset.x = TEXT_MARGIN;
+            offset.y += lineHeight; 
+            offset.x = TEXT_PADDING;
         } 
 
         const blockRect = {
-            height: LINE_HEIGHT,
+            height: lineHeight,
             width: blockWidth,
             x: offset.x,
-            y: offset.y - LINE_HEIGHT
+            y: offset.y - lineHeight
         };
 
         const block = new TextCanvasElement();
@@ -61,7 +78,7 @@ export function getElementsFromText(canvasParams: ICanvasParams, text: string, w
             const char = new CharCanvasElement();
             const charWidth = ctx.measureText(rawChar).width;
             const charRect = {
-                height: LINE_HEIGHT,
+                height: lineHeight,
                 width: charWidth,
                 x: offsetX,
                 y: blockRect.y
@@ -70,9 +87,10 @@ export function getElementsFromText(canvasParams: ICanvasParams, text: string, w
             char.rect = charRect;
             char.rawChar = rawChar;
             char.index = globalCharIndex + blockCharIndex;
+            char.fontSize = fontSize;
 
             if (charPlugin) {
-                charPlugin(char);
+                charPlugin(char, canvasParams);
             }
             
             block.children.push(char);
@@ -85,8 +103,9 @@ export function getElementsFromText(canvasParams: ICanvasParams, text: string, w
         offset.x += blockWidth;
 
         return offset;
-    }, {x: TEXT_MARGIN, y: LINE_HEIGHT});
+    }, {x: TEXT_PADDING, y: lineHeight + textParams.point.y});
 
+    ctx.restore();
     return blocks;
 }
 
