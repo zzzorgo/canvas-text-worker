@@ -4,14 +4,14 @@ import { getFontSetting, MouseEvent, VIEW_PORT_SCALE } from '../constants';
 import { CharCanvasElement } from '../elements/CharCanvasElement';
 import { TextCanvasElement } from '../elements/TextCanvasElement';
 
-export function setHitElements(ctx: CanvasRenderingContext2D, elements: CanvasElement[], pointer: IPoint) {
-    const {x, y} = pointer;
+// export function setHitElements(ctx: CanvasRenderingContext2D, elements: CanvasElement[], pointer: IPoint) {
+//     const {x, y} = pointer;
 
-    elements.forEach((element) => {
-        element.setIsHit(x, y);
-        setHitElements(ctx, element.children, pointer);
-    });
-}
+//     elements.forEach((element) => {
+//         element.setIsHit(x, y);
+//         setHitElements(ctx, element.children, pointer);
+//     });
+// }
 
 const WORD_REG = /([\w\dА-Яа-яёЁ]+)/;
 const SPLIT_TEXT_REG = /([^\w\dА-Яа-яёЁ]+)|([\w\dА-Яа-яёЁ]+)/g;

@@ -88,8 +88,8 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
         const { highlightedWords, pointerPosition } = this.state;
 
         setIsHitPlugin(word, pointerPosition);
-        simpleBrushPlugin(word, highlightedWords);
         hoverPlugin(word, 'black', 0.1);
+        simpleBrushPlugin(word, highlightedWords);
     }
 
     private prepareObjectModel = (canvasParams: ICanvasParams) => {
