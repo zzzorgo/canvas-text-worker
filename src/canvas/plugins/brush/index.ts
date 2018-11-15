@@ -5,3 +5,7 @@ export enum HighlightBrusheTypes {
     UNICODE = 'unicode',
     UNDERSCORE = 'underscore'
 }
+
+export * from './simpleBrush';
+export * from './underscoreBrush';
+export * from './unicodeBrush';

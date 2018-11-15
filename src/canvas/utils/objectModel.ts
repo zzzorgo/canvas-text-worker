@@ -1,6 +1,6 @@
 import { RenderPlugin } from '../CanvasContainer';
 import { CanvasElement, ICanvasParams, IPoint } from '../CanvasElement';
-import { MouseEvent, VIEW_PORT_SCALE } from '../constants';
+import { getFontSetting, MouseEvent, VIEW_PORT_SCALE } from '../constants';
 import { CharCanvasElement } from '../elements/CharCanvasElement';
 import { TextCanvasElement } from '../elements/TextCanvasElement';
 
@@ -36,7 +36,7 @@ export function getElementsFromText(canvasParams: ICanvasParams, textParams: ITe
     const lineHeight = textParams.lineHeight * VIEW_PORT_SCALE;
     const TEXT_PADDING = textParams.point.x;
     const fontSize = textParams.fontSize * VIEW_PORT_SCALE;
-    const FONT_SETTINGS = `100 normal ${fontSize}px 'Calibri'`;
+    const FONT_SETTINGS = getFontSetting(fontSize);
     const { ctx, width: canvasWidth } = canvasParams;
     let globalCharIndex = 0;
 

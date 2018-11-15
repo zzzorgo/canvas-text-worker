@@ -1,5 +1,5 @@
 import { CanvasElement, ICanvasParams, IIndexedCanvasElement } from '../CanvasElement';
-import { TEXT_COLOR } from '../constants';
+import { getFontSetting, TEXT_COLOR } from '../constants';
 
 export class CharCanvasElement extends CanvasElement implements IIndexedCanvasElement {
     public rawChar: string;
@@ -11,7 +11,7 @@ export class CharCanvasElement extends CanvasElement implements IIndexedCanvasEl
 
         ctx.save();
         
-        ctx.font = `100 normal ${this.fontSize}px 'Calibri'`
+        ctx.font = getFontSetting(this.fontSize);
         ctx.fillStyle = TEXT_COLOR;
         ctx.fillText(this.rawChar, this.rect.x, this.rect.y + this.rect.height);
 

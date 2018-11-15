@@ -1,17 +1,21 @@
 import * as _ from 'lodash';
 import * as React from 'react';
-import { underscoreBrushPlugin } from 'src/canvas/plugins/underscoreBrush';
-import { unicodeBrushPlugin } from 'src/canvas/plugins/unicodeBrush';
+
 import { CanvasContainer } from '../canvas/CanvasContainer';
 import { CanvasElement, ICanvasParams, IPoint } from '../canvas/CanvasElement';
 import { INITIAL_HIGHLIGHTED_WORDS, TEXT } from '../canvas/constants';
 import { CharCanvasElement } from '../canvas/elements/CharCanvasElement';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
+import {
+    HighlightBrusheTypes,
+    simpleBrushPlugin,
+    underscoreBrushPlugin,
+    unicodeBrushPlugin 
+} from '../canvas/plugins/brush';
 import { hoverPlugin } from '../canvas/plugins/hover';
 import { setIsHitPlugin } from '../canvas/plugins/setIsHit';
-import { simpleBrushPlugin } from '../canvas/plugins/simpleBrush';
 import { getElementsFromText, getTextParams, toggleArrayElement } from '../canvas/utils/objectModel';
-import { HighlightBrusheTypes } from './HighlightBrush';
+
 import { HighlightingMode, HighlightingState } from './HighlightingState';
 
 export type RenderPlugin = (element: CanvasElement) => void;
@@ -91,7 +95,8 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
     private prepareObjectModel = (canvasParams: ICanvasParams) => {
         const { text } = this.state;
 
-        const elements = getElementsFromText(canvasParams, getTextParams(text, 50, {x: 0, y: 0}), this.wordPlugin, this.charPlugin);
+        const textParams = getTextParams(text, 50, {x: 0, y: 0});
+        const elements = getElementsFromText(canvasParams, textParams, this.wordPlugin, this.charPlugin);
         this.bindEventHandlers(elements);
 
         return elements;

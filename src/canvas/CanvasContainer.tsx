@@ -1,4 +1,5 @@
 import * as React from 'react';
+
 import { CanvasElement, ICanvasParams, IPoint } from './CanvasElement';
 import { INITIAL_CANVAS_HEIGHT, MouseEvent, VIEW_PORT_SCALE } from './constants';
 import { handleElementMouseEvents } from './utils/objectModel';

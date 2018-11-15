@@ -2,7 +2,7 @@ import { CanvasElement, ICanvasParams } from '../CanvasElement';
 import { FillStyle } from '../constants';
 import { fillRect } from '../utils/render';
 
-export class RectHighlightCanvasElement extends CanvasElement {
+export class RectCanvasElement extends CanvasElement {
     public fillStyle: FillStyle;
     public alpha: number;
 

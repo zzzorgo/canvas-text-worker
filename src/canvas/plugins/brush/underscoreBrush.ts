@@ -1,9 +1,9 @@
-import { IIndexedCanvasElement } from '../CanvasElement';
-import { RectHighlightCanvasElement } from '../elements/RectHighlightCanvasElement';
+import { IIndexedCanvasElement } from '../../CanvasElement';
+import { RectCanvasElement } from '../../elements/RectCanvasElement';
 
 export function underscoreBrushPlugin(element: IIndexedCanvasElement, highlightedElements: number[]) {
     if (highlightedElements.includes(element.index)) {
-        const highlight = new RectHighlightCanvasElement();
+        const highlight = new RectCanvasElement();
         highlight.rect = {
             height: 4,
             width: element.rect.width,
