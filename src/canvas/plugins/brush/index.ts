@@ -4,10 +4,12 @@ export enum HighlightBrusheTypes {
     SIMPLE = 'simple',
     UNICODE = 'unicode',
     UNDERSCORE = 'underscore',
-    DOT = 'DOT'
+    DOT = 'dot',
+    PREFIX = 'prefix'
 }
 
 export * from './simpleBrush';
 export * from './underscoreBrush';
 export * from './unicodeBrush';
 export * from './dotBrush';
+export * from './morphemeBrush';

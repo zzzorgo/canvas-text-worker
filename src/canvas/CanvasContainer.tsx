@@ -111,13 +111,14 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
     };
 
     private handleCanvasContextMenu = (e: MouseEvent) => {
-        e.preventDefault();
         handleElementMouseEvents('onContextMenu', this.elements, e);
     };
 
     private handleCanvasMouseMove = (e: MouseEvent) => {
         const { onMouseMove } = this.props;
-        const pointerPosition = {x: e.clientX, y: e.clientY};
+        const { nativeEvent } = e;
+        const pointerPosition = {x: nativeEvent.offsetX, y: nativeEvent.offsetY};
+
         onMouseMove(pointerPosition);
         handleElementMouseEvents('onMouseMove', this.elements, e);
     };

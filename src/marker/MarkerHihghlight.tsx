@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { CanvasContainer } from '../canvas/CanvasContainer';
 import { CanvasElement, ICanvasParams, IPoint } from '../canvas/CanvasElement';
-import { INITIAL_HIGHLIGHTED_WORDS, TEXT } from '../canvas/constants';
+import { MouseEvent, TEXT } from '../canvas/constants';
 import { CharCanvasElement } from '../canvas/elements/CharCanvasElement';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
 import {
@@ -48,7 +48,7 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
                 [HighlightBrusheTypes.UNICODE]: [],
                 [HighlightBrusheTypes.UNDERSCORE]: []
             },
-            highlightedWords: INITIAL_HIGHLIGHTED_WORDS,
+            highlightedWords: [],
             pointerPosition: {x: -1, y: -1},
             selectedBrush: HighlightBrusheTypes.NONE,
             text: TEXT
@@ -149,7 +149,8 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
         this.hilightingState.mode = HighlightingMode.STAND_BY;
     }
 
-    private getWordContexMenuHandler = (word: TextCanvasElement) => () => {
+    private getWordContexMenuHandler = (word: TextCanvasElement) => (e: MouseEvent) => {
+        e.preventDefault();
         this.setState({
             highlightedWords: toggleArrayElement(this.state.highlightedWords, word.index)
         });
