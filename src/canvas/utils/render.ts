@@ -1,5 +1,5 @@
 import { CanvasElement, ICanvasParams, IRect } from '../CanvasElement';
-import { BACKGROUND_COLOR, FillStyle } from '../constants';
+import { FillStyle } from '../constants';
 
 export function fillRect(ctx: CanvasRenderingContext2D, rect: IRect, fillStyle: FillStyle, alpha: number) {
     const {x, y, width, height} = rect;
@@ -13,8 +13,8 @@ export function fillRect(ctx: CanvasRenderingContext2D, rect: IRect, fillStyle: 
 export function clearCanvas(canvasParams: ICanvasParams) {
     const { ctx, width: canvasWidth, height: canvasHeight } = canvasParams;
 
-    ctx.fillStyle = BACKGROUND_COLOR;
-    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    // ctx.fillStyle = BACKGROUND_COLOR;
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 }
 
 export function renderWithChildren(canvasParams: ICanvasParams, element: CanvasElement) {

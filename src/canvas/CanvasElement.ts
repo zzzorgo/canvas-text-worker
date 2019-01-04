@@ -12,6 +12,11 @@ export interface IRect {
     height: number;
 }
 
+export interface ISize {
+    width: number;
+    height: number;
+}
+
 export interface ICanvasParams {
     ctx: CanvasRenderingContext2D,
     width: number,

@@ -1,23 +1,32 @@
 import * as React from 'react';
 
-import { CanvasElement, ICanvasParams, IPoint } from './CanvasElement';
+import { connect } from 'react-redux';
+import { bindActionCreators, Dispatch } from 'redux';
+import { IState } from 'src';
+import { setCanvasParams, setCanvasParamsSize } from './actions';
+import { CanvasElement, ICanvasParams, IPoint, ISize } from './CanvasElement';
 import { INITIAL_CANVAS_HEIGHT, MouseEvent, VIEW_PORT_SCALE } from './constants';
+import { getCanvasSize } from './selectors';
 import { handleElementMouseEvents } from './utils/objectModel';
 import { clearCanvas, renderWithChildren } from './utils/render';
 
 export type RenderPlugin = (element: CanvasElement, canvasParams?: ICanvasParams) => void;
 
+// tslint:disable-next-line:no-empty-interface
 interface ICanvasContainerState {
-    canvasHeight: number,
-    canvasWidth: number
+
 }
 
 interface ICanvasContainerProps {
     prepareObjectModel: (canvasParams: ICanvasParams) => CanvasElement[],
-    onMouseMove: (pointerPosition: IPoint) => void
+    onMouseMove?: (pointerPosition: IPoint) => void,
+    mix?: string,
+    setCanvasParams: any,
+    setCanvasParamsSize: any,
+    canvasSize: ISize
 }
 
-export class CanvasContainer extends React.Component<ICanvasContainerProps, ICanvasContainerState> {
+class CanvasContainerComponent extends React.Component<ICanvasContainerProps, ICanvasContainerState> {
     private canvas: HTMLCanvasElement | null;
     private ctx: CanvasRenderingContext2D | null;
     private elements: CanvasElement[];
@@ -36,6 +45,12 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
             const ctx = this.canvas.getContext('2d');
             if (!ctx) { return; }
             this.ctx = ctx;
+
+            this.props.setCanvasParams({
+                ctx, 
+                height: INITIAL_CANVAS_HEIGHT,
+                width: window.innerWidth * VIEW_PORT_SCALE
+            });
             
             this.prepareObjectModelAndRender();
         }
@@ -52,28 +67,31 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
     }
     
     public render() {
-        const { canvasWidth, canvasHeight } = this.state;
+        const { canvasSize } = this.props;
+        const { mix } = this.props;
 
         return (
             <canvas
+                className={mix}
                 onMouseDown={this.handleCanvasMouseDown}
                 onMouseUp={this.handleCanvasMouseUp}
                 onClick={this.handleCanvasClick}
                 onContextMenu={this.handleCanvasContextMenu}
                 onMouseMove={this.handleCanvasMouseMove}
-                width={canvasWidth}
-                height={canvasHeight}
+                width={canvasSize.width}
+                height={canvasSize.height}
                 ref={ref => this.canvas = ref} 
                 style={{
-                    height: canvasHeight / VIEW_PORT_SCALE,
-                    width: canvasWidth / VIEW_PORT_SCALE
+                    height: canvasSize.height / VIEW_PORT_SCALE,
+                    width: canvasSize.width / VIEW_PORT_SCALE
                 }} />
         );
     }   
 
     private handleResize = () => {
-        this.setState({
-            canvasWidth: window.innerWidth * VIEW_PORT_SCALE
+        this.props.setCanvasParamsSize({
+            height: INITIAL_CANVAS_HEIGHT,
+            width:  window.innerWidth * VIEW_PORT_SCALE
         });
     }
 
@@ -81,9 +99,8 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
         const { ctx } = this;
         if (!ctx) { return; }
 
-        const { prepareObjectModel } = this.props;
-        const { canvasWidth, canvasHeight } = this.state;
-        const canvasParams = {ctx, width: canvasWidth, height: canvasHeight};
+        const { prepareObjectModel, canvasSize } = this.props;
+        const canvasParams = {ctx, width: canvasSize.width, height: canvasSize.height};
 
         const elements = prepareObjectModel(canvasParams);
         this.elements = elements;
@@ -119,7 +136,21 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
         const { nativeEvent } = e;
         const pointerPosition = {x: nativeEvent.offsetX, y: nativeEvent.offsetY};
 
-        onMouseMove(pointerPosition);
+        if (onMouseMove) {
+            onMouseMove(pointerPosition);
+        }
+
         handleElementMouseEvents('onMouseMove', this.elements, e);
     };
 }
+
+const mapStateToProps = (state: IState) => ({
+    canvasSize: getCanvasSize(state)
+});
+
+const mapDispatchToProps = (dispatch: Dispatch) => bindActionCreators({
+    setCanvasParams,
+    setCanvasParamsSize
+}, dispatch);
+
+export const CanvasContainer = connect(mapStateToProps, mapDispatchToProps)(CanvasContainerComponent);
