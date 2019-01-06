@@ -3,23 +3,23 @@ import * as _ from 'lodash';
 import * as React from 'react';
 
 import { CanvasContainer } from '../../canvas/CanvasContainer';
-import { CanvasElement, ICanvasParams, IPoint } from '../../canvas/CanvasElement';
-import { MouseEvent, TEXT } from '../../canvas/constants';
+import { CanvasElement, IPoint, ISize } from '../../canvas/CanvasElement';
+import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../../canvas/constants';
 import { CharCanvasElement } from '../../canvas/elements/CharCanvasElement';
 import { TextCanvasElement } from '../../canvas/elements/TextCanvasElement';
 import {
     HighlightBrusheTypes,
-    simpleBrushPlugin,
-    underscoreBrushPlugin,
-    unicodeBrushPlugin 
+    simpleBrushPlugin
 } from '../../canvas/plugins/brush';
 import { hoverPlugin } from '../../canvas/plugins/hover';
-import { setIsHitPlugin } from '../../canvas/plugins/setIsHit';
 import { getElementsFromText, getTextParams, toggleArrayElement } from '../../canvas/utils/objectModel';
 
 import { HighlightingMode, HighlightingState } from '../HighlightingState';
 
 import './MarkerHihghlight_LAYERS.css';
+import { connect } from 'react-redux';
+import { IState } from 'src';
+import { getCanvasSize } from './selectors';
 
 export type RenderPlugin = (element: CanvasElement) => void;
 
@@ -35,91 +35,109 @@ interface IMarkerHighlightState {
     highlightedWords: number[],
     pointerPosition: IPoint,
     selectedBrush: HighlightBrusheTypes,
-    text: string
+    text: string,
+    ctx?: CanvasRenderingContext2D
 }
 
-export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> {
+interface IMarkerHighlightProps {
+    canvasSize: ISize
+}
+
+class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IMarkerHighlightState> {
     private hilightingState: HighlightingState = new HighlightingState();
     private mainTextElements: TextCanvasElement[];
 
-    constructor(props: {}) {
+    constructor(props: IMarkerHighlightProps) {
         super(props);
 
         this.state = {
             brushes: {
                 [HighlightBrusheTypes.NONE]: [],
-                [HighlightBrusheTypes.SIMPLE]: [],
+                [HighlightBrusheTypes.SIMPLE]: [0, 1, 2, 3],
                 [HighlightBrusheTypes.UNICODE]: [],
                 [HighlightBrusheTypes.UNDERSCORE]: []
             },
             highlightedWords: [],
-            pointerPosition: {x: -1, y: -1},
+            pointerPosition: { x: -1, y: -1 },
             selectedBrush: HighlightBrusheTypes.SIMPLE,
             text: TEXT
         }
     }
 
     public render() {
+        const { brushes, pointerPosition } = this.state;
+        const { canvasSize } = this.props;
+        const mainTextElements = this.prepareObjectModel();
+
         return (
             <div>
-                    <div>
-                        <button onClick={this.selectSimpleHighlight}>1</button>
-                        <button onClick={this.selectUnicodeHighlight}>2</button>
-                        <button onClick={this.selectUnderscoreHighlight}>3</button>
-                    </div>
                 <div>
-                    {/* <CanvasContainer
-                        mix="canvas-container-layer"
-                        prepareObjectModel={this.prepareObjectModel1} /> */}
+                    <button onClick={this.selectSimpleHighlight}>1</button>
+                    <button onClick={this.selectUnicodeHighlight}>2</button>
+                    <button onClick={this.selectUnderscoreHighlight}>3</button>
+                </div>
+                <div className="layers" style={{ height: canvasSize.height / VIEW_PORT_SCALE }}>
+                    <SimpleSelectionLayer
+                        mainTextElements={mainTextElements}
+                        selectedElementIds={brushes[HighlightBrusheTypes.SIMPLE]} />
+                    <HoverLayer
+                        pointerPosition={pointerPosition}
+                        mainTextElements={mainTextElements} />
                     <CanvasContainer
+                        objectModel={mainTextElements}
                         mix="canvas-container-layer"
-                        prepareObjectModel={this.prepareObjectModel2} />
-                    <HoverLayer />
+                        onContextReady={this.setCanvasContext}
+                        onMouseMove={this.setPointerPosition} />
                 </div>
             </div>
         );
     }
 
-    // private setPointerPosition = (pointerPosition: IPoint) => {
-    //     this.setState({pointerPosition});
+    private setPointerPosition = (pointerPosition: IPoint) => {
+        this.setState({ pointerPosition });
+    }
+
+    private setCanvasContext = (ctx: CanvasRenderingContext2D) => {
+        this.setState({ ctx });
+    }
+
+    // private charPlugin = (char: CharCanvasElement, canvasParams: ICanvasParams) => {
+    //     const { brushes, pointerPosition } = this.state;
+
+    //     setIsHitPlugin(char, pointerPosition);
+    //     // hoverPlugin(char);
+    //     simpleBrushPlugin(char, brushes[HighlightBrusheTypes.SIMPLE]);
+    //     unicodeBrushPlugin(char, brushes[HighlightBrusheTypes.UNICODE], canvasParams);
+    //     underscoreBrushPlugin(char, brushes[HighlightBrusheTypes.UNDERSCORE]);
     // }
 
-    private charPlugin = (char: CharCanvasElement, canvasParams: ICanvasParams) => {
-        const { brushes, pointerPosition } = this.state;
+    // private wordPlugin = (word: TextCanvasElement) => {
+    //     const { highlightedWords, pointerPosition } = this.state;
 
-        setIsHitPlugin(char, pointerPosition);
-        hoverPlugin(char);
-        simpleBrushPlugin(char, brushes[HighlightBrusheTypes.SIMPLE]);
-        unicodeBrushPlugin(char, brushes[HighlightBrusheTypes.UNICODE], canvasParams);
-        underscoreBrushPlugin(char, brushes[HighlightBrusheTypes.UNDERSCORE]);
-    }
+    //     setIsHitPlugin(word, pointerPosition);
+    //     // hoverPlugin(word, 'black', 0.1);
+    //     simpleBrushPlugin(word, highlightedWords);
+    // }
 
-    private wordPlugin = (word: TextCanvasElement) => {
-        const { highlightedWords, pointerPosition } = this.state;
+    private prepareObjectModel = () => {
+        const { text, ctx } = this.state;
+        const { canvasSize } = this.props;
 
-        setIsHitPlugin(word, pointerPosition);
-        hoverPlugin(word, 'black', 0.1);
-        simpleBrushPlugin(word, highlightedWords);
-    }
+        if (ctx) {
+            const canvasParams = {
+                ctx,
+                width: canvasSize.width,
+                height: canvasSize.height
+            }
 
-    // private prepareObjectModel1 = (canvasParams: ICanvasParams) => {
-    //     const { text } = this.state;
+            const textParams = getTextParams(text, 50, { x: 0, y: 0 });
+            this.mainTextElements = getElementsFromText(canvasParams, textParams);
+            this.bindEventHandlers(this.mainTextElements);
 
-    //     const textParams = getTextParams(text, 50, {x: 0, y: 0});
-    //     const elements = getElementsFromText(canvasParams, textParams, this.wordPlugin, this.charPlugin);
+            return this.mainTextElements;
+        }
 
-    //     return elements;
-    // }    
-    
-    private prepareObjectModel2 = (canvasParams: ICanvasParams) => {
-        const { text } = this.state;
-
-        console.log(this.wordPlugin, this.charPlugin);
-        console.log(this.bindEventHandlers);
-        const textParams = getTextParams(text, 50, {x: 0, y: 0});
-        this.mainTextElements = getElementsFromText(canvasParams, textParams);;
-
-        return this.mainTextElements;
+        return [];
     }
 
     private bindEventHandlers = (elements: CanvasElement[]) => {
@@ -135,7 +153,8 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
                     char.onMouseUp = this.getCharMouseUpHandler(char);
                 }
             }
-        )});
+            )
+        });
     }
 
     private updateHighlightedChars = (char: CharCanvasElement) => {
@@ -147,7 +166,7 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
             [selectedBrush]: newHighlightedChars
         };
 
-        this.setState({brushes: newBrushes});
+        this.setState({ brushes: newBrushes });
     };
 
     /// Event handlers
@@ -155,15 +174,15 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
     private getCharMouseDownHandler = (char: CharCanvasElement) => () => {
         const { brushes, selectedBrush } = this.state;
         const alreadyHighlighted = brushes[selectedBrush].includes(char.index);
-        
+
         this.hilightingState.start = char.index;
         this.hilightingState.mode = alreadyHighlighted ? HighlightingMode.REMOVING : HighlightingMode.ADDING;
     }
-    
+
     private getCharMouseMoveHandler = (char: CharCanvasElement) => () => {
         this.updateHighlightedChars(char);
     };
-  
+
     private getCharMouseUpHandler = (char: CharCanvasElement) => () => {
         this.updateHighlightedChars(char);
         this.hilightingState.mode = HighlightingMode.STAND_BY;
@@ -177,35 +196,82 @@ export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> 
     }
 
     private selectSimpleHighlight = () => {
-        this.setState({selectedBrush: HighlightBrusheTypes.SIMPLE});
+        this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE });
     };
 
     private selectUnicodeHighlight = () => {
-        this.setState({selectedBrush: HighlightBrusheTypes.UNICODE});
+        this.setState({ selectedBrush: HighlightBrusheTypes.UNICODE });
     };
 
     private selectUnderscoreHighlight = () => {
-        this.setState({selectedBrush: HighlightBrusheTypes.UNDERSCORE});
+        this.setState({ selectedBrush: HighlightBrusheTypes.UNDERSCORE });
     };
 }
 
-class HoverLayer extends React.Component {
-    state = {};
+const mapStateToProps = (state: IState) => ({
+    canvasSize: getCanvasSize(state)
+});
 
+export const MarkerHighlight = connect(mapStateToProps)(MarkerHighlightComponent);
+
+interface IHoverLayerProps {
+    mainTextElements: TextCanvasElement[],
+    pointerPosition: IPoint
+}
+
+class HoverLayer extends React.Component<IHoverLayerProps> {
     public render() {
         return (
             <CanvasContainer
-                mix="canvas-container-layer"
-                prepareObjectModel={this.prepareObjectModel}
-                onMouseMove={this.setPointerPosition} />
+                objectModel={this.prepareObjectModel()}
+                mix="canvas-container-layer hover-layer" />
         );
     }
 
     prepareObjectModel = () => {
-        return [];
-    };
+        const { mainTextElements, pointerPosition } = this.props;
+        const elements: CanvasElement[] = [];
 
-    private setPointerPosition = (pointerPosition: IPoint) => {
-        this.setState({pointerPosition});
+        mainTextElements.forEach(element => {
+            const hoverElement = hoverPlugin(element, pointerPosition, 'black');
+            if (hoverElement && hoverElement.rect) {
+                elements.push(hoverElement);
+            }
+        });
+
+        return elements;
+    };
+}
+
+interface ISimpleSelectionLayerProps {
+    mainTextElements: TextCanvasElement[],
+    selectedElementIds: number[]
+}
+
+class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerProps> {
+    public render() {
+        return (
+            <CanvasContainer
+                objectModel={this.prepareObjectModel()}
+                mix="canvas-container-layer" />
+        );
     }
+
+    prepareObjectModel = () => {
+        const { mainTextElements, selectedElementIds } = this.props;
+        const elements: CanvasElement[] = [];
+
+        mainTextElements.forEach(textElement => {
+            textElement.children.forEach(charElement => {
+                if (charElement instanceof CharCanvasElement) {
+                    const simpleBrushElement = simpleBrushPlugin(charElement, selectedElementIds);
+                    if (simpleBrushElement && simpleBrushElement.rect) {
+                        elements.push(simpleBrushElement);
+                    }
+                }
+            });
+        });
+
+        return elements;
+    };
 }

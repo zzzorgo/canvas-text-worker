@@ -1,14 +1,15 @@
-import { CanvasElement } from '../CanvasElement';
+import { CanvasElement, IPoint } from '../CanvasElement';
 import { FillStyle } from '../constants';
 import { RectCanvasElement } from '../elements/RectCanvasElement';
 
-export function hoverPlugin(element: CanvasElement, fillStyle: FillStyle = 'red', alpha: number = 0.3) {
-    if (element.getIsHit()) {
-        const highlight = new RectCanvasElement();
+export function hoverPlugin(element: CanvasElement, pointerPosition: IPoint, fillStyle: FillStyle = 'red', alpha: number = 0.3) {
+    const highlight = new RectCanvasElement();
+
+    if (element.setIsHit(pointerPosition.x, pointerPosition.y)) {
         highlight.rect = element.rect;
         highlight.fillStyle = fillStyle;
         highlight.alpha = alpha;
-
-        element.children.push(highlight);
     }
+    
+    return highlight;
 };

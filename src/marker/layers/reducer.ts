@@ -1,5 +1,5 @@
-import { ISetCanvasParamsAction, ISetCanvasParamsSizeAction } from './actions';
-import { SET_CANVAS_PARAMS, SET_CANVAS_PARAMS_SIZE } from './actionTypes';
+import { ISetCanvasParamsSizeAction } from './actions';
+import { SET_CANVAS_PARAMS_SIZE } from './actionTypes';
 
 export interface ICanvasContaierState {
     ctx?: CanvasRenderingContext2D,
@@ -13,14 +13,10 @@ const initialState = {
     height: 0
 };
 
-type CanvasContainerAction = ISetCanvasParamsAction | ISetCanvasParamsSizeAction;
+type CanvasContainerAction = ISetCanvasParamsSizeAction;
 
 export const canvasContainerReducer = (state: ICanvasContaierState = initialState, action: CanvasContainerAction) => {
     switch (action.type) {
-        case SET_CANVAS_PARAMS: {
-            const { canvasParams } = action;
-            return { ...state, ...canvasParams };
-        }
         case SET_CANVAS_PARAMS_SIZE: {
             const { width, height } = action.size;
             return {

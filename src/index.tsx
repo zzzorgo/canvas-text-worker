@@ -3,8 +3,8 @@ import * as ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { combineReducers, createStore } from 'redux';
 import App from './App';
-import { canvasContainerReducer, ICanvasContaierState } from './canvas/reducer';
 import './index.css';
+import { canvasContainerReducer, ICanvasContaierState } from './marker/layers/reducer';
 import registerServiceWorker from './registerServiceWorker';
 
 export interface IState {

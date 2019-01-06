@@ -102,7 +102,7 @@ export function getElementsFromText(canvasParams: ICanvasParams, textParams: ITe
 
 export function handleElementMouseEvents(eventName: string, elements: CanvasElement[], e: MouseEvent) {
     elements.forEach(element => {
-        if (element.getIsHit()) {
+        if (element.setIsHit(e.nativeEvent.offsetX, e.nativeEvent.offsetY)) {
             element[eventName](e);
         }
 

@@ -31,6 +31,7 @@ export abstract class CanvasElement {
 
     public setIsHit = (x: number, y: number) => {
         this.isHit = this.checkHit(x, y)
+        return this.isHit;
     }
 
     public getIsHit = () => this.isHit;
@@ -62,8 +63,8 @@ export abstract class CanvasElement {
         const viewPortY = y * VIEW_PORT_SCALE;
 
         const hitArea = this.rect;
-        const hitByX = viewPortX > hitArea.x && viewPortX < hitArea.x + hitArea.width;
-        const hitByY = viewPortY > hitArea.y && viewPortY < hitArea.y + hitArea.height;
+        const hitByX = viewPortX > hitArea.x && viewPortX < (hitArea.x + hitArea.width);
+        const hitByY = viewPortY > hitArea.y && viewPortY < (hitArea.y + hitArea.height);
         
         return hitByX && hitByY;
     }
