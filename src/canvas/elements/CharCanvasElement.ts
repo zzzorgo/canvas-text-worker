@@ -14,7 +14,8 @@ export class CharCanvasElement extends CanvasElement implements IIndexedCanvasEl
         ctx.font = getFontSetting(this.fontSize);
         ctx.fillStyle = TEXT_COLOR;
         ctx.fillText(this.rawChar, this.rect.x, this.rect.y + this.rect.height);
-
+        /* tslint:disable-next-line */
+        // console.log(123);
         ctx.restore()
     }
 }

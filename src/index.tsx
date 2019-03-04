@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { combineReducers, createStore } from 'redux';
 import App from './App';
 import './index.css';
-import { canvasContainerReducer, ICanvasContaierState } from './marker/layers/reducer';
+import { canvasContainerReducer, ICanvasContaierState } from './marker/reducer';
 import registerServiceWorker from './registerServiceWorker';
 
 export interface IState {

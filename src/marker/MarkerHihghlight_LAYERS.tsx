@@ -2,19 +2,19 @@
 import * as _ from 'lodash';
 import * as React from 'react';
 
-import { CanvasContainer } from '../../canvas/CanvasContainer';
-import { CanvasElement, IPoint, ISize } from '../../canvas/CanvasElement';
-import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../../canvas/constants';
-import { CharCanvasElement } from '../../canvas/elements/CharCanvasElement';
-import { TextCanvasElement } from '../../canvas/elements/TextCanvasElement';
+import { CanvasContainer } from '../canvas/CanvasContainer';
+import { CanvasElement, IPoint, ISize } from '../canvas/CanvasElement';
+import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../canvas/constants';
+import { CharCanvasElement } from '../canvas/elements/CharCanvasElement';
+import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
 import {
     HighlightBrusheTypes,
     simpleBrushPlugin
-} from '../../canvas/plugins/brush';
-import { hoverPlugin } from '../../canvas/plugins/hover';
-import { getElementsFromText, getTextParams, toggleArrayElement } from '../../canvas/utils/objectModel';
+} from '../canvas/plugins/brush';
+import { hoverPlugin } from '../canvas/plugins/hover';
+import { getElementsFromText, getTextParams, toggleArrayElement } from '../canvas/utils/objectModel';
 
-import { HighlightingMode, HighlightingState } from '../HighlightingState';
+import { HighlightingMode, HighlightingState } from './HighlightingState';
 
 import './MarkerHihghlight_LAYERS.css';
 import { connect } from 'react-redux';
@@ -33,7 +33,6 @@ interface IBrushesState {
 interface IMarkerHighlightState {
     brushes: IBrushesState,
     highlightedWords: number[],
-    pointerPosition: IPoint,
     selectedBrush: HighlightBrusheTypes,
     text: string,
     ctx?: CanvasRenderingContext2D
@@ -58,14 +57,13 @@ class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IM
                 [HighlightBrusheTypes.UNDERSCORE]: []
             },
             highlightedWords: [],
-            pointerPosition: { x: -1, y: -1 },
             selectedBrush: HighlightBrusheTypes.SIMPLE,
             text: TEXT
         }
     }
 
     public render() {
-        const { brushes, pointerPosition } = this.state;
+        const { brushes } = this.state;
         const { canvasSize } = this.props;
         const mainTextElements = this.prepareObjectModel();
 
@@ -81,43 +79,19 @@ class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IM
                         mainTextElements={mainTextElements}
                         selectedElementIds={brushes[HighlightBrusheTypes.SIMPLE]} />
                     <HoverLayer
-                        pointerPosition={pointerPosition}
                         mainTextElements={mainTextElements} />
                     <CanvasContainer
                         objectModel={mainTextElements}
                         mix="canvas-container-layer"
-                        onContextReady={this.setCanvasContext}
-                        onMouseMove={this.setPointerPosition} />
+                        onContextReady={this.setCanvasContext} />
                 </div>
             </div>
         );
     }
 
-    private setPointerPosition = (pointerPosition: IPoint) => {
-        this.setState({ pointerPosition });
-    }
-
     private setCanvasContext = (ctx: CanvasRenderingContext2D) => {
         this.setState({ ctx });
     }
-
-    // private charPlugin = (char: CharCanvasElement, canvasParams: ICanvasParams) => {
-    //     const { brushes, pointerPosition } = this.state;
-
-    //     setIsHitPlugin(char, pointerPosition);
-    //     // hoverPlugin(char);
-    //     simpleBrushPlugin(char, brushes[HighlightBrusheTypes.SIMPLE]);
-    //     unicodeBrushPlugin(char, brushes[HighlightBrusheTypes.UNICODE], canvasParams);
-    //     underscoreBrushPlugin(char, brushes[HighlightBrusheTypes.UNDERSCORE]);
-    // }
-
-    // private wordPlugin = (word: TextCanvasElement) => {
-    //     const { highlightedWords, pointerPosition } = this.state;
-
-    //     setIsHitPlugin(word, pointerPosition);
-    //     // hoverPlugin(word, 'black', 0.1);
-    //     simpleBrushPlugin(word, highlightedWords);
-    // }
 
     private prepareObjectModel = () => {
         const { text, ctx } = this.state;
@@ -215,21 +189,34 @@ const mapStateToProps = (state: IState) => ({
 export const MarkerHighlight = connect(mapStateToProps)(MarkerHighlightComponent);
 
 interface IHoverLayerProps {
-    mainTextElements: TextCanvasElement[],
+    mainTextElements: TextCanvasElement[]
+}
+
+interface IHoverLayerState {
     pointerPosition: IPoint
 }
 
-class HoverLayer extends React.Component<IHoverLayerProps> {
+class HoverLayer extends React.Component<IHoverLayerProps, IHoverLayerState> {
+    state = {
+        pointerPosition: { x: -1, y: -1 }
+    };
+
+    private setPointerPosition = (pointerPosition: IPoint) => {
+        this.setState({ pointerPosition });
+    }
+
     public render() {
         return (
             <CanvasContainer
                 objectModel={this.prepareObjectModel()}
-                mix="canvas-container-layer hover-layer" />
+                mix="canvas-container-layer hover-layer"
+                onMouseMove={this.setPointerPosition} />
         );
     }
 
     prepareObjectModel = () => {
-        const { mainTextElements, pointerPosition } = this.props;
+        const { mainTextElements } = this.props;
+        const { pointerPosition } = this.state;
         const elements: CanvasElement[] = [];
 
         mainTextElements.forEach(element => {

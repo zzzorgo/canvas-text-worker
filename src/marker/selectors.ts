@@ -1,6 +1,6 @@
 import { createSelector } from 'reselect';
 import { IState } from 'src';
-import { ISize } from '../../canvas/CanvasElement';
+import { ISize } from '../canvas/CanvasElement';
 import { ICanvasContaierState } from './reducer';
 
 const getLocalState = (state: IState) : ICanvasContaierState => state.canvasContainer;
