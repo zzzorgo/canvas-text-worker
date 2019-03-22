@@ -1,27 +1,25 @@
 /* tslint:disable */
-import * as _ from 'lodash';
 import * as React from 'react';
-
+import { connect } from 'react-redux';
+import { IState } from 'src';
+import { MessageDelivery, ISubscription, IDeliveryTarget, IMessage, IHoverMessage, MessageType } from 'src/message-delivery';
 import { CanvasContainer } from '../canvas/CanvasContainer';
 import { CanvasElement, IPoint, ISize } from '../canvas/CanvasElement';
 import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../canvas/constants';
 import { CharCanvasElement } from '../canvas/elements/CharCanvasElement';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
-import {
-    HighlightBrusheTypes,
-    simpleBrushPlugin
-} from '../canvas/plugins/brush';
+import { HighlightBrusheTypes, simpleBrushPlugin } from '../canvas/plugins/brush';
 import { hoverPlugin } from '../canvas/plugins/hover';
 import { getElementsFromText, getTextParams, toggleArrayElement } from '../canvas/utils/objectModel';
-
 import { HighlightingMode, HighlightingState } from './HighlightingState';
-
 import './MarkerHihghlight_LAYERS.css';
-import { connect } from 'react-redux';
-import { IState } from 'src';
 import { getCanvasSize } from './selectors';
 
 export type RenderPlugin = (element: CanvasElement) => void;
+
+interface ISubscriberProps {
+    subscription: ISubscription    
+}
 
 interface IBrushesState {
     [HighlightBrusheTypes.NONE]: number[],
@@ -45,6 +43,7 @@ interface IMarkerHighlightProps {
 class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IMarkerHighlightState> {
     private hilightingState: HighlightingState = new HighlightingState();
     private mainTextElements: TextCanvasElement[];
+    private messageDelivery: MessageDelivery = new MessageDelivery();
 
     constructor(props: IMarkerHighlightProps) {
         super(props);
@@ -66,6 +65,7 @@ class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IM
         const { brushes } = this.state;
         const { canvasSize } = this.props;
         const mainTextElements = this.prepareObjectModel();
+        console.log('heavy render');
 
         return (
             <div>
@@ -74,11 +74,13 @@ class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IM
                     <button onClick={this.selectUnicodeHighlight}>2</button>
                     <button onClick={this.selectUnderscoreHighlight}>3</button>
                 </div>
-                <div className="layers" style={{ height: canvasSize.height / VIEW_PORT_SCALE }}>
+                <div className="layers" style={{ height: canvasSize.height / VIEW_PORT_SCALE }} onMouseMove={this.deliverHoverMessage}>
                     <SimpleSelectionLayer
+                        subscription={this.messageDelivery}
                         mainTextElements={mainTextElements}
                         selectedElementIds={brushes[HighlightBrusheTypes.SIMPLE]} />
                     <HoverLayer
+                        subscription={this.messageDelivery}
                         mainTextElements={mainTextElements} />
                     <CanvasContainer
                         objectModel={mainTextElements}
@@ -88,6 +90,15 @@ class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IM
             </div>
         );
     }
+
+    private deliverHoverMessage = (e: MouseEvent) => {
+        const hoverMessage = {
+            type: MessageType.hover,
+            pointerPosition: {x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY}
+        }
+        
+        this.messageDelivery.dispatchMessage(hoverMessage);
+    };
 
     private setCanvasContext = (ctx: CanvasRenderingContext2D) => {
         this.setState({ ctx });
@@ -133,14 +144,15 @@ class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IM
 
     private updateHighlightedChars = (char: CharCanvasElement) => {
         const { brushes, selectedBrush } = this.state;
-
         const newHighlightedChars = this.hilightingState.getNewHighlightedChars(char.index, brushes[selectedBrush]);
-        const newBrushes = {
-            ...brushes,
-            [selectedBrush]: newHighlightedChars
-        };
 
-        this.setState({ brushes: newBrushes });
+        if (newHighlightedChars !== brushes[selectedBrush]) {
+            const newBrushes = {
+                ...brushes,
+                [selectedBrush]: newHighlightedChars
+            };
+            this.setState({ brushes: newBrushes });
+        }
     };
 
     /// Event handlers
@@ -188,7 +200,7 @@ const mapStateToProps = (state: IState) => ({
 
 export const MarkerHighlight = connect(mapStateToProps)(MarkerHighlightComponent);
 
-interface IHoverLayerProps {
+interface IHoverLayerProps extends ISubscriberProps {
     mainTextElements: TextCanvasElement[]
 }
 
@@ -196,10 +208,32 @@ interface IHoverLayerState {
     pointerPosition: IPoint
 }
 
+class HoverLayerTarget implements IDeliveryTarget {
+    private hoverHandler: (pointerPosition: IPoint) => void;
+
+    constructor(hoverHandler: (pointerPosition: IPoint) => void) {
+        this.hoverHandler = hoverHandler;
+    }
+
+    handleMessage(message: IMessage) {
+        if (message.type === MessageType.hover) {
+            const hoverMessage = message as IHoverMessage;
+            this.hoverHandler(hoverMessage.pointerPosition);
+        }
+    }
+}
+
 class HoverLayer extends React.Component<IHoverLayerProps, IHoverLayerState> {
     state = {
         pointerPosition: { x: -1, y: -1 }
     };
+
+    constructor(props: IHoverLayerProps) {
+        super(props);
+
+        const target = new HoverLayerTarget(this.setPointerPosition);
+        props.subscription.subscribe(target);
+    }
 
     private setPointerPosition = (pointerPosition: IPoint) => {
         this.setState({ pointerPosition });
@@ -224,13 +258,23 @@ class HoverLayer extends React.Component<IHoverLayerProps, IHoverLayerState> {
             if (hoverElement && hoverElement.rect) {
                 elements.push(hoverElement);
             }
+
+            element.children.forEach(char => {
+                if (char instanceof CharCanvasElement) {
+                    const hoverElement = hoverPlugin(char, pointerPosition, 'black');
+
+                    if (hoverElement && hoverElement.rect) {
+                        elements.push(hoverElement);
+                    }
+                }
+            });
         });
 
         return elements;
     };
 }
 
-interface ISimpleSelectionLayerProps {
+interface ISimpleSelectionLayerProps extends ISubscriberProps {
     mainTextElements: TextCanvasElement[],
     selectedElementIds: number[]
 }
