@@ -1,4 +1,4 @@
-import { IPoint } from "src/canvas/CanvasElement";
+import { IPoint } from 'src/canvas/CanvasElement';
 
 export interface IMessage {
     type: MessageType

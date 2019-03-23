@@ -5,7 +5,7 @@ import { CanvasContainer } from '../canvas/CanvasContainer';
 import { CanvasElement, ISize } from '../canvas/CanvasElement';
 import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../canvas/constants';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
-import { getElementsFromText, getTextParams } from '../canvas/utils/objectModel';
+import { getElementsFromText, getTextParams, handleElementMouseEvents } from '../canvas/utils/objectModel';
 import './MarkerHihghlight.css';
 import { SimpleSelectionLayer } from './layers/simpleSelection/component';
 import { HoverLayer } from './layers/hover/component';
@@ -65,11 +65,9 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                     onMouseDown={this.deliverMouseDownMessage}
                     onMouseUp={this.deliverMouseUpMessage}>
                         <SimpleSelectionLayer
-                            subscription={this.messageDelivery}
                             mainTextElements={mainTextElements} />
                         <SimpleWordSelectionLayer
                             active={false}
-                            subscription={this.messageDelivery}
                             mainTextElements={mainTextElements} />
                         <HoverLayer
                             subscription={this.messageDelivery}
@@ -84,30 +82,29 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
     }
 
     private deliverMouseMoveMessage = (e: MouseEvent) => {
-        const message = {
-            type: MessageType.mouseMove,
-            pointerPosition: {x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY}
-        }
-        
-        this.messageDelivery.dispatchMessage(message);
+        this.deliverMouseMessage(MessageType.mouseMove, e);
     };
 
     private deliverMouseDownMessage = (e: MouseEvent) => {
-        const message = {
-            type: MessageType.mouseDown,
-            pointerPosition: {x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY}
-        }
-        
-        this.messageDelivery.dispatchMessage(message);
+        this.deliverMouseMessage(MessageType.mouseDown, e);
+
     };
 
     private deliverMouseUpMessage = (e: MouseEvent) => {
+        this.deliverMouseMessage(MessageType.mouseUp, e);
+
+    };
+
+    private deliverMouseMessage = (type: MessageType, e: MouseEvent) => {
+        const x = e.nativeEvent.offsetX;
+        const y = e.nativeEvent.offsetY;
         const message = {
-            type: MessageType.mouseUp,
-            pointerPosition: {x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY}
+            type,
+            pointerPosition: {x, y}
         }
         
         this.messageDelivery.dispatchMessage(message);
+        handleElementMouseEvents(message.type, this.mainTextElements, message);
     };
 
     private setCanvasContext = (width: number, height: number, ctx?: CanvasRenderingContext2D) => {

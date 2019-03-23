@@ -121,3 +121,15 @@ export function toggleArrayElement(array: any[], element: any) : any[] {
         return array.filter(oldElement => oldElement !== element);
     }
 }
+
+export function findElements(elements: CanvasElement[], predicate: (element: CanvasElement) => boolean): CanvasElement[] {
+    return elements.reduce((acc: CanvasElement[], element) => {
+        if (predicate(element)) {
+            acc.push(element);
+        }
+
+        acc.concat(findElements(element.children, predicate));
+        
+        return acc;
+    }, []);
+}

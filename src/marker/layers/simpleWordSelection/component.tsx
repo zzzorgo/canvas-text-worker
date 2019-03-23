@@ -3,13 +3,9 @@ import { CanvasContainer } from 'src/canvas/CanvasContainer';
 import { CanvasElement, IIndexedCanvasElement } from 'src/canvas/CanvasElement';
 import { TextCanvasElement } from 'src/canvas/elements/TextCanvasElement';
 import { simpleBrushPlugin } from 'src/canvas/plugins/brush';
-import { handleElementMouseEvents } from 'src/canvas/utils/objectModel';
 import { HighlightingMode, HighlightingState } from 'src/marker/HighlightingState';
-import { ISubscriberProps } from 'src/marker/MarkerHihghlight';
-import { IMouseMessage } from 'src/message-delivery';
-import { SimpleSelectionLayerTarget } from './target';
 
-interface ISimpleSelectionLayerProps extends ISubscriberProps {
+interface ISimpleSelectionLayerProps {
     mainTextElements: TextCanvasElement[],
     active: boolean
 }
@@ -24,9 +20,6 @@ export class SimpleWordSelectionLayer extends React.Component<ISimpleSelectionLa
     constructor(props: ISimpleSelectionLayerProps) {
         super(props);
 
-        const target = new SimpleSelectionLayerTarget(this.mouseMessageHandler);
-        props.subscription.subscribe(target);
-
         this.state = {
             selectedElements: [0, 1, 2, 3]
         }
@@ -39,15 +32,6 @@ export class SimpleWordSelectionLayer extends React.Component<ISimpleSelectionLa
                 mix="canvas-container-layer" />
         );
     }
-
-    private mouseMessageHandler = (message: IMouseMessage) => {
-        const { active } = this.props;
-
-        if (active) {
-            const { mainTextElements } = this.props;
-            handleElementMouseEvents(message.type, mainTextElements, message);
-        }
-    };
     
     private prepareObjectModel = () => {
         const { selectedElements } = this.state;
