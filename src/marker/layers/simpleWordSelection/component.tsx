@@ -1,24 +1,24 @@
 import * as React from 'react';
 import { CanvasContainer } from 'src/canvas/CanvasContainer';
-import { CanvasElement } from 'src/canvas/CanvasElement';
-import { CharCanvasElement } from 'src/canvas/elements/CharCanvasElement';
+import { CanvasElement, IIndexedCanvasElement } from 'src/canvas/CanvasElement';
 import { TextCanvasElement } from 'src/canvas/elements/TextCanvasElement';
 import { simpleBrushPlugin } from 'src/canvas/plugins/brush';
 import { handleElementMouseEvents } from 'src/canvas/utils/objectModel';
 import { HighlightingMode, HighlightingState } from 'src/marker/HighlightingState';
 import { ISubscriberProps } from 'src/marker/MarkerHihghlight';
 import { IMouseMessage } from 'src/message-delivery';
-import { SimpleSelectionLayerTarget } from '../simpleWordSelection/target';
+import { SimpleSelectionLayerTarget } from './target';
 
 interface ISimpleSelectionLayerProps extends ISubscriberProps {
-    mainTextElements: TextCanvasElement[]
+    mainTextElements: TextCanvasElement[],
+    active: boolean
 }
 
 interface ISimpleSelectionLayerState {
     selectedElements: number[]
 }
 
-export class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerProps, ISimpleSelectionLayerState> {
+export class SimpleWordSelectionLayer extends React.Component<ISimpleSelectionLayerProps, ISimpleSelectionLayerState> {
     private hilightingState: HighlightingState = new HighlightingState();
 
     constructor(props: ISimpleSelectionLayerProps) {
@@ -41,55 +41,55 @@ export class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerP
     }
 
     private mouseMessageHandler = (message: IMouseMessage) => {
-        const { mainTextElements } = this.props;
-        handleElementMouseEvents(message.type, mainTextElements, message);
-    };
+        const { active } = this.props;
 
+        if (active) {
+            const { mainTextElements } = this.props;
+            handleElementMouseEvents(message.type, mainTextElements, message);
+        }
+    };
+    
     private prepareObjectModel = () => {
         const { selectedElements } = this.state;
         const { mainTextElements } = this.props;
         const elements: CanvasElement[] = [];
         
         mainTextElements.forEach(textElement => {
-            textElement.children.forEach(charElement => {
-                if (charElement instanceof CharCanvasElement) {
-                    charElement.onMouseDown = this.getCharMouseDownHandler(charElement);
-                    charElement.onMouseMove = this.getCharMouseMoveHandler(charElement);
-                    charElement.onMouseUp = this.getCharMouseUpHandler(charElement);
-                    
-                    const simpleBrushElement = simpleBrushPlugin(charElement, selectedElements);
+            if (textElement instanceof TextCanvasElement) {
+                textElement.onMouseDown = this.getCharMouseDownHandler(textElement);
+                textElement.onMouseMove = this.getCharMouseMoveHandler(textElement);
+                textElement.onMouseUp = this.getCharMouseUpHandler(textElement);
 
-                    if (simpleBrushElement && simpleBrushElement.rect) {
-                        elements.push(simpleBrushElement);
-                    }
+                const simpleBrushElement = simpleBrushPlugin(textElement, selectedElements);
+
+                if (simpleBrushElement && simpleBrushElement.rect) {
+                    elements.push(simpleBrushElement);
                 }
-            });
+            }
         });
 
         return elements;
     };
 
-    private getCharMouseDownHandler = (char: CharCanvasElement) => () => {
+    private getCharMouseDownHandler = (word: IIndexedCanvasElement) => () => {
         const { selectedElements } = this.state;
-        const alreadyHighlighted = selectedElements.includes(char.index);
-    
-        this.hilightingState.start = char.index;
+        const alreadyHighlighted = selectedElements.includes(word.index);    
+        this.hilightingState.start = word.index;
         this.hilightingState.mode = alreadyHighlighted ? HighlightingMode.REMOVING : HighlightingMode.ADDING;
     }
     
-    private getCharMouseMoveHandler = (char: CharCanvasElement) => () => {
-        this.updateHighlightedChars(char);
+    private getCharMouseMoveHandler = (word: IIndexedCanvasElement) => () => {
+        this.updateHighlightedWords(word);
     };
     
-    private getCharMouseUpHandler = (char: CharCanvasElement) => () => {
-        this.updateHighlightedChars(char);
+    private getCharMouseUpHandler = (word: IIndexedCanvasElement) => () => {
+        this.updateHighlightedWords(word);
         this.hilightingState.mode = HighlightingMode.STAND_BY;
     }
 
-    private updateHighlightedChars = (char: CharCanvasElement) => {
+    private updateHighlightedWords = (word: IIndexedCanvasElement) => {
         const { selectedElements } = this.state;
-        const newHighlightedChars = this.hilightingState.getNewHighlightedChars(char.index, selectedElements);
-
+        const newHighlightedChars = this.hilightingState.getNewHighlightedChars(word.index, selectedElements);
         this.setState({ selectedElements: newHighlightedChars });
     };
 }

@@ -9,6 +9,7 @@ import { getElementsFromText, getTextParams } from '../canvas/utils/objectModel'
 import './MarkerHihghlight.css';
 import { SimpleSelectionLayer } from './layers/simpleSelection/component';
 import { HoverLayer } from './layers/hover/component';
+import { SimpleWordSelectionLayer } from './layers/simpleWordSelection/component';
 
 export type MouseEventHandler = (message: IMessage) => void;
 
@@ -64,6 +65,10 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                     onMouseDown={this.deliverMouseDownMessage}
                     onMouseUp={this.deliverMouseUpMessage}>
                         <SimpleSelectionLayer
+                            subscription={this.messageDelivery}
+                            mainTextElements={mainTextElements} />
+                        <SimpleWordSelectionLayer
+                            active={false}
                             subscription={this.messageDelivery}
                             mainTextElements={mainTextElements} />
                         <HoverLayer
