@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { IState } from 'src';
-import { MessageDelivery, ISubscription, IDeliveryTarget, IMessage, IHoverMessage, MessageType } from 'src/message-delivery';
+import { MessageDelivery, ISubscription, IDeliveryTarget, IMessage, IMouseMessage, MessageType } from 'src/message-delivery';
 import { CanvasContainer } from '../canvas/CanvasContainer';
 import { CanvasElement, IPoint, ISize } from '../canvas/CanvasElement';
 import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../canvas/constants';
@@ -10,7 +10,7 @@ import { CharCanvasElement } from '../canvas/elements/CharCanvasElement';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
 import { HighlightBrusheTypes, simpleBrushPlugin } from '../canvas/plugins/brush';
 import { hoverPlugin } from '../canvas/plugins/hover';
-import { getElementsFromText, getTextParams, toggleArrayElement } from '../canvas/utils/objectModel';
+import { getElementsFromText, getTextParams, handleElementMouseEvents } from '../canvas/utils/objectModel';
 import { HighlightingMode, HighlightingState } from './HighlightingState';
 import './MarkerHihghlight_LAYERS.css';
 import { getCanvasSize } from './selectors';
@@ -29,9 +29,7 @@ interface IBrushesState {
 }
 
 interface IMarkerHighlightState {
-    brushes: IBrushesState,
-    highlightedWords: number[],
-    selectedBrush: HighlightBrusheTypes,
+    highlightedWords: number[]
     text: string,
     ctx?: CanvasRenderingContext2D
 }
@@ -41,7 +39,6 @@ interface IMarkerHighlightProps {
 }
 
 class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IMarkerHighlightState> {
-    private hilightingState: HighlightingState = new HighlightingState();
     private mainTextElements: TextCanvasElement[];
     private messageDelivery: MessageDelivery = new MessageDelivery();
 
@@ -49,55 +46,69 @@ class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IM
         super(props);
 
         this.state = {
-            brushes: {
-                [HighlightBrusheTypes.NONE]: [],
-                [HighlightBrusheTypes.SIMPLE]: [0, 1, 2, 3],
-                [HighlightBrusheTypes.UNICODE]: [],
-                [HighlightBrusheTypes.UNDERSCORE]: []
-            },
             highlightedWords: [],
-            selectedBrush: HighlightBrusheTypes.SIMPLE,
             text: TEXT
         }
     }
 
     public render() {
-        const { brushes } = this.state;
         const { canvasSize } = this.props;
         const mainTextElements = this.prepareObjectModel();
         console.log('heavy render');
 
         return (
             <div>
-                <div>
+                {/* <div>
                     <button onClick={this.selectSimpleHighlight}>1</button>
                     <button onClick={this.selectUnicodeHighlight}>2</button>
                     <button onClick={this.selectUnderscoreHighlight}>3</button>
-                </div>
-                <div className="layers" style={{ height: canvasSize.height / VIEW_PORT_SCALE }} onMouseMove={this.deliverHoverMessage}>
-                    <SimpleSelectionLayer
-                        subscription={this.messageDelivery}
-                        mainTextElements={mainTextElements}
-                        selectedElementIds={brushes[HighlightBrusheTypes.SIMPLE]} />
-                    <HoverLayer
-                        subscription={this.messageDelivery}
-                        mainTextElements={mainTextElements} />
-                    <CanvasContainer
-                        objectModel={mainTextElements}
-                        mix="canvas-container-layer"
-                        onContextReady={this.setCanvasContext} />
+                </div> */}
+                <div
+                    className="layers"
+                    style={{ height: canvasSize.height / VIEW_PORT_SCALE }}
+                    onMouseMove={this.deliverMouseMoveMessage}
+                    onMouseDown={this.deliverMouseDownMessage}
+                    onMouseUp={this.deliverMouseUpMessage}>
+                        <SimpleSelectionLayer
+                            subscription={this.messageDelivery}
+                            mainTextElements={mainTextElements} />
+                        <HoverLayer
+                            subscription={this.messageDelivery}
+                            mainTextElements={mainTextElements} />
+                        <CanvasContainer
+                            objectModel={mainTextElements}
+                            mix="canvas-container-layer"
+                            onContextReady={this.setCanvasContext} />
                 </div>
             </div>
         );
     }
 
-    private deliverHoverMessage = (e: MouseEvent) => {
-        const hoverMessage = {
-            type: MessageType.hover,
+    private deliverMouseMoveMessage = (e: MouseEvent) => {
+        const message = {
+            type: MessageType.mouseMove,
             pointerPosition: {x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY}
         }
         
-        this.messageDelivery.dispatchMessage(hoverMessage);
+        this.messageDelivery.dispatchMessage(message);
+    };
+
+    private deliverMouseDownMessage = (e: MouseEvent) => {
+        const message = {
+            type: MessageType.mouseDown,
+            pointerPosition: {x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY}
+        }
+        
+        this.messageDelivery.dispatchMessage(message);
+    };
+
+    private deliverMouseUpMessage = (e: MouseEvent) => {
+        const message = {
+            type: MessageType.mouseUp,
+            pointerPosition: {x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY}
+        }
+        
+        this.messageDelivery.dispatchMessage(message);
     };
 
     private setCanvasContext = (ctx: CanvasRenderingContext2D) => {
@@ -117,7 +128,6 @@ class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IM
 
             const textParams = getTextParams(text, 50, { x: 0, y: 0 });
             this.mainTextElements = getElementsFromText(canvasParams, textParams);
-            this.bindEventHandlers(this.mainTextElements);
 
             return this.mainTextElements;
         }
@@ -125,73 +135,19 @@ class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IM
         return [];
     }
 
-    private bindEventHandlers = (elements: CanvasElement[]) => {
-        elements.forEach(word => {
-            if (word instanceof TextCanvasElement) {
-                word.onContextMenu = this.getWordContexMenuHandler(word);
-            }
-
-            word.children.forEach(char => {
-                if (char instanceof CharCanvasElement) {
-                    char.onMouseDown = this.getCharMouseDownHandler(char);
-                    char.onMouseMove = this.getCharMouseMoveHandler(char);
-                    char.onMouseUp = this.getCharMouseUpHandler(char);
-                }
-            }
-            )
-        });
-    }
-
-    private updateHighlightedChars = (char: CharCanvasElement) => {
-        const { brushes, selectedBrush } = this.state;
-        const newHighlightedChars = this.hilightingState.getNewHighlightedChars(char.index, brushes[selectedBrush]);
-
-        if (newHighlightedChars !== brushes[selectedBrush]) {
-            const newBrushes = {
-                ...brushes,
-                [selectedBrush]: newHighlightedChars
-            };
-            this.setState({ brushes: newBrushes });
-        }
-    };
-
     /// Event handlers
 
-    private getCharMouseDownHandler = (char: CharCanvasElement) => () => {
-        const { brushes, selectedBrush } = this.state;
-        const alreadyHighlighted = brushes[selectedBrush].includes(char.index);
+    // private selectSimpleHighlight = () => {
+    //     this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE });
+    // };
 
-        this.hilightingState.start = char.index;
-        this.hilightingState.mode = alreadyHighlighted ? HighlightingMode.REMOVING : HighlightingMode.ADDING;
-    }
+    // private selectUnicodeHighlight = () => {
+    //     this.setState({ selectedBrush: HighlightBrusheTypes.UNICODE });
+    // };
 
-    private getCharMouseMoveHandler = (char: CharCanvasElement) => () => {
-        this.updateHighlightedChars(char);
-    };
-
-    private getCharMouseUpHandler = (char: CharCanvasElement) => () => {
-        this.updateHighlightedChars(char);
-        this.hilightingState.mode = HighlightingMode.STAND_BY;
-    }
-
-    private getWordContexMenuHandler = (word: TextCanvasElement) => (e: MouseEvent) => {
-        e.preventDefault();
-        this.setState({
-            highlightedWords: toggleArrayElement(this.state.highlightedWords, word.index)
-        });
-    }
-
-    private selectSimpleHighlight = () => {
-        this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE });
-    };
-
-    private selectUnicodeHighlight = () => {
-        this.setState({ selectedBrush: HighlightBrusheTypes.UNICODE });
-    };
-
-    private selectUnderscoreHighlight = () => {
-        this.setState({ selectedBrush: HighlightBrusheTypes.UNDERSCORE });
-    };
+    // private selectUnderscoreHighlight = () => {
+    //     this.setState({ selectedBrush: HighlightBrusheTypes.UNDERSCORE });
+    // };
 }
 
 const mapStateToProps = (state: IState) => ({
@@ -216,8 +172,8 @@ class HoverLayerTarget implements IDeliveryTarget {
     }
 
     handleMessage(message: IMessage) {
-        if (message.type === MessageType.hover) {
-            const hoverMessage = message as IHoverMessage;
+        if (message.type === MessageType.mouseMove) {
+            const hoverMessage = message as IMouseMessage;
             this.hoverHandler(hoverMessage.pointerPosition);
         }
     }
@@ -274,28 +230,105 @@ class HoverLayer extends React.Component<IHoverLayerProps, IHoverLayerState> {
     };
 }
 
-interface ISimpleSelectionLayerProps extends ISubscriberProps {
-    mainTextElements: TextCanvasElement[],
-    selectedElementIds: number[]
-}
+type MouseEventHandler = (message: IMessage) => void;
 
-class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerProps> {
-    public render() {
-        return (
-            <CanvasContainer
-                objectModel={this.prepareObjectModel()}
-                mix="canvas-container-layer" />
-        );
+class SimpleSelectionLayerTarget implements IDeliveryTarget {
+    private mouseMoveHandler: MouseEventHandler;
+    private mouseDownHandler: MouseEventHandler;
+    private mouseUpHandler: MouseEventHandler;
+
+    constructor(mouseMoveHandler: MouseEventHandler, mouseDownHandler: MouseEventHandler, mouseUpHandler: MouseEventHandler) {
+        this.mouseMoveHandler = mouseMoveHandler;
+        this.mouseDownHandler = mouseDownHandler;
+        this.mouseUpHandler = mouseUpHandler;
     }
 
-    prepareObjectModel = () => {
-        const { mainTextElements, selectedElementIds } = this.props;
-        const elements: CanvasElement[] = [];
+    handleMessage(message: IMessage) {
+        switch (message.type) {
+            case MessageType.mouseMove: {
+                this.mouseMoveHandler(message);
+                break;
+            }
+                
+            case MessageType.mouseDown: {
+                this.mouseDownHandler(message);
+                break;
+            }
+            
+            case MessageType.mouseUp: {
+                this.mouseUpHandler(message);
+                break;
+            }
+        
+            default:
+                break;
+        }
+    }
+}
 
+interface ISimpleSelectionLayerProps extends ISubscriberProps {
+    mainTextElements: TextCanvasElement[]
+}
+
+
+interface ISimpleSelectionLayerState {
+    brushes: IBrushesState,
+    selectedBrush: HighlightBrusheTypes,
+}
+
+class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerProps, ISimpleSelectionLayerState> {
+    private hilightingState: HighlightingState = new HighlightingState();
+
+    constructor(props: ISimpleSelectionLayerProps) {
+        super(props);
+
+        const target = new SimpleSelectionLayerTarget(
+            this.handleCanvasMouseMove,
+            this.handleCanvasMouseDown,
+            this.handleCanvasMouseUp
+        );
+        props.subscription.subscribe(target);
+
+        this.state = {
+            brushes: {
+                [HighlightBrusheTypes.NONE]: [],
+                [HighlightBrusheTypes.SIMPLE]: [0, 1, 2, 3],
+                [HighlightBrusheTypes.UNICODE]: [],
+                [HighlightBrusheTypes.UNDERSCORE]: []
+            },
+            selectedBrush: HighlightBrusheTypes.SIMPLE
+        }
+    }
+
+    private handleCanvasMouseDown = (message: IMessage) => {
+        const { mainTextElements } = this.props;
+        handleElementMouseEvents('onMouseDown', mainTextElements, message as IMouseMessage);
+    };
+
+    private handleCanvasMouseUp = (message: IMessage) => {
+        const { mainTextElements } = this.props;
+        handleElementMouseEvents('onMouseUp', mainTextElements, message as IMouseMessage);
+    };
+
+    private handleCanvasMouseMove = (message: IMessage) => {
+        const { mainTextElements } = this.props;
+        handleElementMouseEvents('onMouseMove', mainTextElements, message as IMouseMessage);
+    };
+    
+    prepareObjectModel = () => {
+        const { brushes, selectedBrush } = this.state;
+        const { mainTextElements } = this.props;
+        const elements: CanvasElement[] = [];
+        
         mainTextElements.forEach(textElement => {
             textElement.children.forEach(charElement => {
                 if (charElement instanceof CharCanvasElement) {
-                    const simpleBrushElement = simpleBrushPlugin(charElement, selectedElementIds);
+                    charElement.onMouseDown = this.getCharMouseDownHandler(charElement);
+                    charElement.onMouseMove = this.getCharMouseMoveHandler(charElement);
+                    charElement.onMouseUp = this.getCharMouseUpHandler(charElement);
+                    
+                    const simpleBrushElement = simpleBrushPlugin(charElement, brushes[selectedBrush]);
+
                     if (simpleBrushElement && simpleBrushElement.rect) {
                         elements.push(simpleBrushElement);
                     }
@@ -305,4 +338,42 @@ class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerProps> {
 
         return elements;
     };
+
+    private getCharMouseDownHandler = (char: CharCanvasElement) => () => {
+        const { brushes, selectedBrush } = this.state;
+        const alreadyHighlighted = brushes[selectedBrush].includes(char.index);
+    
+        this.hilightingState.start = char.index;
+        this.hilightingState.mode = alreadyHighlighted ? HighlightingMode.REMOVING : HighlightingMode.ADDING;
+    }
+    
+    private getCharMouseMoveHandler = (char: CharCanvasElement) => () => {
+        this.updateHighlightedChars(char);
+    };
+    
+    private getCharMouseUpHandler = (char: CharCanvasElement) => () => {
+        this.updateHighlightedChars(char);
+        this.hilightingState.mode = HighlightingMode.STAND_BY;
+    }
+
+    private updateHighlightedChars = (char: CharCanvasElement) => {
+        const { brushes, selectedBrush } = this.state;
+        const newHighlightedChars = this.hilightingState.getNewHighlightedChars(char.index, brushes[selectedBrush]);
+
+        if (newHighlightedChars !== brushes[selectedBrush]) {
+            const newBrushes = {
+                ...brushes,
+                [selectedBrush]: newHighlightedChars
+            };
+            this.setState({ brushes: newBrushes });
+        }
+    };
+    
+    public render() {
+        return (
+            <CanvasContainer
+                objectModel={this.prepareObjectModel()}
+                mix="canvas-container-layer" />
+        );
+    }
 }

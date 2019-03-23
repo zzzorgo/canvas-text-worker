@@ -4,7 +4,7 @@ export interface IMessage {
     type: MessageType
 }
 
-export interface IHoverMessage extends IMessage {
+export interface IMouseMessage extends IMessage {
     pointerPosition: IPoint
 } 
 
@@ -13,7 +13,7 @@ export interface IDeliveryTarget {
 }
 
 export interface ISubscription {
-    subscribe: (traget: IDeliveryTarget) => void
+    subscribe: (target: IDeliveryTarget) => void
 }
 
 export interface IMessageDelivery extends ISubscription{
@@ -35,5 +35,7 @@ export class MessageDelivery implements IMessageDelivery {
 }
 
 export enum MessageType {
-    hover
+    mouseMove,
+    mouseDown,
+    mouseUp
 }

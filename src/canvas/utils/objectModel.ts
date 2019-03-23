@@ -1,6 +1,7 @@
+import { IMouseMessage } from 'src/message-delivery';
 import { RenderPlugin } from '../CanvasContainer';
 import { CanvasElement, ICanvasParams, IPoint } from '../CanvasElement';
-import { getFontSetting, MouseEvent, VIEW_PORT_SCALE } from '../constants';
+import { getFontSetting, VIEW_PORT_SCALE } from '../constants';
 import { CharCanvasElement } from '../elements/CharCanvasElement';
 import { TextCanvasElement } from '../elements/TextCanvasElement';
 
@@ -100,13 +101,13 @@ export function getElementsFromText(canvasParams: ICanvasParams, textParams: ITe
     return blocks;
 }
 
-export function handleElementMouseEvents(eventName: string, elements: CanvasElement[], e: MouseEvent) {
+export function handleElementMouseEvents(eventName: string, elements: CanvasElement[], message: IMouseMessage) {
     elements.forEach(element => {
-        if (element.setIsHit(e.nativeEvent.offsetX, e.nativeEvent.offsetY)) {
-            element[eventName](e);
+        if (element.setIsHit(message.pointerPosition.x, message.pointerPosition.y)) {
+            element[eventName](message);
         }
 
-        handleElementMouseEvents(eventName, element.children, e);
+        handleElementMouseEvents(eventName, element.children, message);
     });
 }
 
