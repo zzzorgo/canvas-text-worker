@@ -13,7 +13,7 @@ interface ICanvasContainerState {
 
 interface ICanvasContainerProps {
     mix?: string,
-    onContextReady?: (canvasParams: ICanvasParams) => void,
+    onContextReady?: (canvasWidth: number, canvasHeight: number, ctx?: CanvasRenderingContext2D) => void,
     objectModel: CanvasElement[]
 }
 
@@ -39,11 +39,7 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
             
             
             if (this.props.onContextReady) {
-                this.props.onContextReady({
-                    ctx,
-                    width: canvasWidth,
-                    height: canvasHeight
-                });
+                this.props.onContextReady(canvasWidth, canvasHeight, ctx);
             }
             
             this.handleResize();
@@ -80,10 +76,17 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
     }   
 
     private handleResize = () => {
+        const canvasWidth = window.innerWidth * VIEW_PORT_SCALE;
+        const canvasHeight = INITIAL_CANVAS_HEIGHT;
+
         this.setState({
-            canvasHeight: INITIAL_CANVAS_HEIGHT,
-            canvasWidth:  window.innerWidth * VIEW_PORT_SCALE
+            canvasWidth,
+            canvasHeight
         });
+
+        if (this.props.onContextReady) {
+            this.props.onContextReady(canvasWidth, canvasHeight);
+        }
     }
 
     private prepareObjectModelAndRender() {

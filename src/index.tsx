@@ -6,7 +6,7 @@ import App from './App';
 import './index.css';
 import registerServiceWorker from './registerServiceWorker';
 
-/* tslint:disable-next-line */
+// tslint:disable-next-line:no-empty-interface
 export interface IState {
     // canvasContainer: ICanvasContaierState
 }
