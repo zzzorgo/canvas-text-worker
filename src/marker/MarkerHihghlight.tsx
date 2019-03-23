@@ -1,15 +1,12 @@
 /* tslint:disable */
 import * as React from 'react';
-import { connect } from 'react-redux';
-import { IState } from 'src';
 import { MessageDelivery, ISubscription, IMessage, MessageType } from 'src/message-delivery';
 import { CanvasContainer } from '../canvas/CanvasContainer';
-import { CanvasElement, ISize } from '../canvas/CanvasElement';
+import { CanvasElement, ICanvasParams } from '../canvas/CanvasElement';
 import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../canvas/constants';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
 import { getElementsFromText, getTextParams } from '../canvas/utils/objectModel';
 import './MarkerHihghlight.css';
-import { getCanvasSize } from './selectors';
 import { SimpleSelectionLayer } from './layers/simpleSelection/component';
 import { HoverLayer } from './layers/hover/component';
 
@@ -24,14 +21,13 @@ export interface ISubscriberProps {
 interface IMarkerHighlightState {
     highlightedWords: number[]
     text: string,
-    ctx?: CanvasRenderingContext2D
+    canvasParams?: ICanvasParams
 }
 
 interface IMarkerHighlightProps {
-    canvasSize: ISize
 }
 
-class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IMarkerHighlightState> {
+export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMarkerHighlightState> {
     private mainTextElements: TextCanvasElement[];
     private messageDelivery: MessageDelivery = new MessageDelivery();
 
@@ -45,9 +41,10 @@ class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IM
     }
 
     public render() {
-        const { canvasSize } = this.props;
+        const { canvasParams } = this.state;
         const mainTextElements = this.prepareObjectModel();
         console.log('heavy render');
+        const height = canvasParams ? canvasParams.height : 0;
 
         return (
             <div>
@@ -58,7 +55,7 @@ class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IM
                 </div> */}
                 <div
                     className="layers"
-                    style={{ height: canvasSize.height / VIEW_PORT_SCALE }}
+                    style={{ height: height / VIEW_PORT_SCALE }}
                     onMouseMove={this.deliverMouseMoveMessage}
                     onMouseDown={this.deliverMouseDownMessage}
                     onMouseUp={this.deliverMouseUpMessage}>
@@ -104,21 +101,15 @@ class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IM
         this.messageDelivery.dispatchMessage(message);
     };
 
-    private setCanvasContext = (ctx: CanvasRenderingContext2D) => {
-        this.setState({ ctx });
+    private setCanvasContext = (canvasParams: ICanvasParams) => {
+        console.log(canvasParams);
+        this.setState({ canvasParams });
     }
 
     private prepareObjectModel = () => {
-        const { text, ctx } = this.state;
-        const { canvasSize } = this.props;
+        const { text, canvasParams } = this.state;
 
-        if (ctx) {
-            const canvasParams = {
-                ctx,
-                width: canvasSize.width,
-                height: canvasSize.height
-            }
-
+        if (canvasParams) {
             const textParams = getTextParams(text, 50, { x: 0, y: 0 });
             this.mainTextElements = getElementsFromText(canvasParams, textParams);
 
@@ -142,9 +133,3 @@ class MarkerHighlightComponent extends React.Component<IMarkerHighlightProps, IM
     //     this.setState({ selectedBrush: HighlightBrusheTypes.UNDERSCORE });
     // };
 }
-
-const mapStateToProps = (state: IState) => ({
-    canvasSize: getCanvasSize(state)
-});
-
-export const MarkerHighlight = connect(mapStateToProps)(MarkerHighlightComponent);

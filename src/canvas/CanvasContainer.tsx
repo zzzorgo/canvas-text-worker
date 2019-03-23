@@ -1,10 +1,5 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
-import { bindActionCreators, Dispatch } from 'redux';
-import { IState } from 'src';
-import { setCanvasParamsSize } from '../marker/actions';
-import { getCanvasSize } from '../marker/selectors';
-import { CanvasElement, ICanvasParams, IPoint, ISize } from './CanvasElement';
+import { CanvasElement, ICanvasParams } from './CanvasElement';
 import { INITIAL_CANVAS_HEIGHT, VIEW_PORT_SCALE } from './constants';
 import { clearCanvas, renderWithChildren } from './utils/render';
 
@@ -12,19 +7,17 @@ export type RenderPlugin = (element: CanvasElement, canvasParams?: ICanvasParams
 
 // tslint:disable-next-line:no-empty-interface
 interface ICanvasContainerState {
-
+    canvasWidth: number,
+    canvasHeight: number
 }
 
 interface ICanvasContainerProps {
-    onMouseMove?: (pointerPosition: IPoint) => void,
     mix?: string,
-    setCanvasParamsSize: (size: ISize) => void,
-    canvasSize: ISize,
-    onContextReady?: (ctx: CanvasRenderingContext2D) => void,
+    onContextReady?: (canvasParams: ICanvasParams) => void,
     objectModel: CanvasElement[]
 }
 
-class CanvasContainerComponent extends React.Component<ICanvasContainerProps, ICanvasContainerState> {
+export class CanvasContainer extends React.Component<ICanvasContainerProps, ICanvasContainerState> {
     private canvas: HTMLCanvasElement | null;
     private ctx: CanvasRenderingContext2D | null;
 
@@ -42,16 +35,19 @@ class CanvasContainerComponent extends React.Component<ICanvasContainerProps, IC
             const ctx = this.canvas.getContext('2d');
             if (!ctx) { return; }
             this.ctx = ctx;
-
+            const { canvasHeight, canvasWidth } = this.state;
+            
+            
             if (this.props.onContextReady) {
-                this.props.onContextReady(ctx);
+                this.props.onContextReady({
+                    ctx,
+                    width: canvasWidth,
+                    height: canvasHeight
+                });
             }
             
-            this.props.setCanvasParamsSize({
-                height: INITIAL_CANVAS_HEIGHT,
-                width: window.innerWidth * VIEW_PORT_SCALE
-            });
-            
+            this.handleResize();
+
             this.prepareObjectModelAndRender();
         }
 
@@ -67,26 +63,26 @@ class CanvasContainerComponent extends React.Component<ICanvasContainerProps, IC
     }
     
     public render() {
-        const { canvasSize } = this.props;
+        const { canvasHeight, canvasWidth } = this.state;
         const { mix } = this.props;
 
         return (
             <canvas
                 className={mix}
-                width={canvasSize.width}
-                height={canvasSize.height}
+                width={canvasWidth}
+                height={canvasHeight}
                 ref={ref => this.canvas = ref} 
                 style={{
-                    height: canvasSize.height / VIEW_PORT_SCALE,
-                    width: canvasSize.width / VIEW_PORT_SCALE
+                    height: canvasHeight / VIEW_PORT_SCALE,
+                    width: canvasWidth / VIEW_PORT_SCALE
                 }} />
         );
     }   
 
     private handleResize = () => {
-        this.props.setCanvasParamsSize({
-            height: INITIAL_CANVAS_HEIGHT,
-            width:  window.innerWidth * VIEW_PORT_SCALE
+        this.setState({
+            canvasHeight: INITIAL_CANVAS_HEIGHT,
+            canvasWidth:  window.innerWidth * VIEW_PORT_SCALE
         });
     }
 
@@ -94,8 +90,9 @@ class CanvasContainerComponent extends React.Component<ICanvasContainerProps, IC
         const { ctx } = this;
         if (!ctx) { return; }
 
-        const { objectModel, canvasSize } = this.props;
-        const canvasParams = {ctx, width: canvasSize.width, height: canvasSize.height};
+        const { objectModel } = this.props;
+        const { canvasWidth, canvasHeight } = this.state;
+        const canvasParams = {ctx, width: canvasWidth, height: canvasHeight};
 
         const elements = objectModel;
         this.renderOnCanvas(canvasParams, elements);
@@ -109,13 +106,3 @@ class CanvasContainerComponent extends React.Component<ICanvasContainerProps, IC
         });
     }
 }
-
-const mapStateToProps = (state: IState) => ({
-    canvasSize: getCanvasSize(state)
-});
-
-const mapDispatchToProps = (dispatch: Dispatch) => bindActionCreators({
-    setCanvasParamsSize
-}, dispatch);
-
-export const CanvasContainer = connect(mapStateToProps, mapDispatchToProps)(CanvasContainerComponent);

@@ -31,8 +31,7 @@ export class HoverLayer extends React.Component<IHoverLayerProps, IHoverLayerSta
         return (
             <CanvasContainer
                 objectModel={this.prepareObjectModel()}
-                mix="canvas-container-layer hover-layer"
-                onMouseMove={this.setPointerPosition} />
+                mix="canvas-container-layer hover-layer" />
         );
     }
 

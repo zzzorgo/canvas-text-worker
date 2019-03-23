@@ -4,15 +4,14 @@ import { Provider } from 'react-redux';
 import { combineReducers, createStore } from 'redux';
 import App from './App';
 import './index.css';
-import { canvasContainerReducer, ICanvasContaierState } from './marker/reducer';
 import registerServiceWorker from './registerServiceWorker';
 
+/* tslint:disable-next-line */
 export interface IState {
-    canvasContainer: ICanvasContaierState
+    // canvasContainer: ICanvasContaierState
 }
 
 const reducer = combineReducers({
-    canvasContainer: canvasContainerReducer
 });
 
 // tslint:disable-next-line:no-string-literal
