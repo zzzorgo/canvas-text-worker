@@ -2,17 +2,16 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { IState } from 'src';
-import { MessageDelivery, ISubscription, IDeliveryTarget, IMessage, IMouseMessage, MessageType } from 'src/message-delivery';
+import { MessageDelivery, ISubscription, IMessage, MessageType } from 'src/message-delivery';
 import { CanvasContainer } from '../canvas/CanvasContainer';
-import { CanvasElement, IPoint, ISize } from '../canvas/CanvasElement';
+import { CanvasElement, ISize } from '../canvas/CanvasElement';
 import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../canvas/constants';
-import { CharCanvasElement } from '../canvas/elements/CharCanvasElement';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
-import { hoverPlugin } from '../canvas/plugins/hover';
 import { getElementsFromText, getTextParams } from '../canvas/utils/objectModel';
 import './MarkerHihghlight.css';
 import { getCanvasSize } from './selectors';
-import { SimpleSelectionLayer } from './layers/simpleSelection/SimpleSelectionLayer';
+import { SimpleSelectionLayer } from './layers/simpleSelection/component';
+import { HoverLayer } from './layers/hover/component';
 
 export type MouseEventHandler = (message: IMessage) => void;
 
@@ -149,77 +148,3 @@ const mapStateToProps = (state: IState) => ({
 });
 
 export const MarkerHighlight = connect(mapStateToProps)(MarkerHighlightComponent);
-
-interface IHoverLayerProps extends ISubscriberProps {
-    mainTextElements: TextCanvasElement[]
-}
-
-interface IHoverLayerState {
-    pointerPosition: IPoint
-}
-
-class HoverLayerTarget implements IDeliveryTarget {
-    private hoverHandler: (pointerPosition: IPoint) => void;
-
-    constructor(hoverHandler: (pointerPosition: IPoint) => void) {
-        this.hoverHandler = hoverHandler;
-    }
-
-    handleMessage(message: IMessage) {
-        if (message.type === MessageType.mouseMove) {
-            const hoverMessage = message as IMouseMessage;
-            this.hoverHandler(hoverMessage.pointerPosition);
-        }
-    }
-}
-
-class HoverLayer extends React.Component<IHoverLayerProps, IHoverLayerState> {
-    state = {
-        pointerPosition: { x: -1, y: -1 }
-    };
-
-    constructor(props: IHoverLayerProps) {
-        super(props);
-
-        const target = new HoverLayerTarget(this.setPointerPosition);
-        props.subscription.subscribe(target);
-    }
-
-    private setPointerPosition = (pointerPosition: IPoint) => {
-        this.setState({ pointerPosition });
-    }
-
-    public render() {
-        return (
-            <CanvasContainer
-                objectModel={this.prepareObjectModel()}
-                mix="canvas-container-layer hover-layer"
-                onMouseMove={this.setPointerPosition} />
-        );
-    }
-
-    prepareObjectModel = () => {
-        const { mainTextElements } = this.props;
-        const { pointerPosition } = this.state;
-        const elements: CanvasElement[] = [];
-
-        mainTextElements.forEach(element => {
-            const hoverElement = hoverPlugin(element, pointerPosition, 'black');
-            if (hoverElement && hoverElement.rect) {
-                elements.push(hoverElement);
-            }
-
-            element.children.forEach(char => {
-                if (char instanceof CharCanvasElement) {
-                    const hoverElement = hoverPlugin(char, pointerPosition, 'black');
-
-                    if (hoverElement && hoverElement.rect) {
-                        elements.push(hoverElement);
-                    }
-                }
-            });
-        });
-
-        return elements;
-    };
-}
