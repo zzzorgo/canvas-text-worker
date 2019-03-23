@@ -10,6 +10,7 @@ import './MarkerHihghlight.css';
 import { SimpleSelectionLayer } from './layers/simpleSelection/component';
 import { HoverLayer } from './layers/hover/component';
 import { SimpleWordSelectionLayer } from './layers/simpleWordSelection/component';
+import { HighlightBrusheTypes } from 'src/canvas/plugins/brush';
 
 export type MouseEventHandler = (message: IMessage) => void;
 
@@ -23,7 +24,8 @@ interface IMarkerHighlightState {
     highlightedWords: number[]
     text: string,
     canvasSize: ISize,
-    ctx?: CanvasRenderingContext2D
+    ctx?: CanvasRenderingContext2D,
+    selectedBrush: HighlightBrusheTypes
 }
 
 interface IMarkerHighlightProps {
@@ -42,22 +44,23 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
             canvasSize: {
                 width: 0,
                 height: 0
-            }
+            },
+            selectedBrush: HighlightBrusheTypes.SIMPLE_CHAR
         }
     }
 
     public render() {
-        const { canvasSize } = this.state;
+        const { canvasSize, selectedBrush } = this.state;
         const mainTextElements = this.prepareObjectModel();
         console.log('heavy render');
 
         return (
             <div>
-                {/* <div>
+                <div>
                     <button onClick={this.selectSimpleHighlight}>1</button>
                     <button onClick={this.selectUnicodeHighlight}>2</button>
-                    <button onClick={this.selectUnderscoreHighlight}>3</button>
-                </div> */}
+                    {/* <button onClick={this.selectUnderscoreHighlight}>3</button> */}
+                </div>
                 <div
                     className="layers"
                     style={{ height: canvasSize.height / VIEW_PORT_SCALE }}
@@ -65,9 +68,10 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                     onMouseDown={this.deliverMouseDownMessage}
                     onMouseUp={this.deliverMouseUpMessage}>
                         <SimpleSelectionLayer
+                            active={selectedBrush === HighlightBrusheTypes.SIMPLE_CHAR}
                             mainTextElements={mainTextElements} />
                         <SimpleWordSelectionLayer
-                            active={false}
+                            active={selectedBrush === HighlightBrusheTypes.SIMPLE_WORD}
                             mainTextElements={mainTextElements} />
                         <HoverLayer
                             subscription={this.messageDelivery}
@@ -137,15 +141,13 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
         return [];
     }
 
-    /// Event handlers
+    private selectSimpleHighlight = () => {
+        this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE_CHAR });
+    };
 
-    // private selectSimpleHighlight = () => {
-    //     this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE });
-    // };
-
-    // private selectUnicodeHighlight = () => {
-    //     this.setState({ selectedBrush: HighlightBrusheTypes.UNICODE });
-    // };
+    private selectUnicodeHighlight = () => {
+        this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE_WORD });
+    };
 
     // private selectUnderscoreHighlight = () => {
     //     this.setState({ selectedBrush: HighlightBrusheTypes.UNDERSCORE });

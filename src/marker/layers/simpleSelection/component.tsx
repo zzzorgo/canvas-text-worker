@@ -7,7 +7,8 @@ import { simpleBrushPlugin } from 'src/canvas/plugins/brush';
 import { HighlightingMode, HighlightingState } from 'src/marker/HighlightingState';
 
 interface ISimpleSelectionLayerProps {
-    mainTextElements: TextCanvasElement[]
+    mainTextElements: TextCanvasElement[],
+    active: boolean
 }
 
 interface ISimpleSelectionLayerState {
@@ -15,6 +16,10 @@ interface ISimpleSelectionLayerState {
 }
 
 export class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerProps, ISimpleSelectionLayerState> {
+    public static defaultProps = {
+        active: true
+    };
+    
     private hilightingState: HighlightingState = new HighlightingState();
 
     constructor(props: ISimpleSelectionLayerProps) {
@@ -41,9 +46,7 @@ export class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerP
         mainTextElements.forEach(textElement => {
             textElement.children.forEach(charElement => {
                 if (charElement instanceof CharCanvasElement) {
-                    charElement.onMouseDown = this.getCharMouseDownHandler(charElement);
-                    charElement.onMouseMove = this.getCharMouseMoveHandler(charElement);
-                    charElement.onMouseUp = this.getCharMouseUpHandler(charElement);
+                    this.bindEventHandlers(charElement);
                     
                     const simpleBrushElement = simpleBrushPlugin(charElement, selectedElements);
 
@@ -56,6 +59,16 @@ export class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerP
 
         return elements;
     };
+
+    private bindEventHandlers = (charElement: CharCanvasElement) => {
+        const { active } = this.props;
+
+        if (active) {
+            charElement.onMouseDown = this.getCharMouseDownHandler(charElement);
+            charElement.onMouseMove = this.getCharMouseMoveHandler(charElement);
+            charElement.onMouseUp = this.getCharMouseUpHandler(charElement);
+        }
+    }
 
     private getCharMouseDownHandler = (char: CharCanvasElement) => () => {
         const { selectedElements } = this.state;

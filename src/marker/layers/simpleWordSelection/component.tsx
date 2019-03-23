@@ -15,6 +15,10 @@ interface ISimpleSelectionLayerState {
 }
 
 export class SimpleWordSelectionLayer extends React.Component<ISimpleSelectionLayerProps, ISimpleSelectionLayerState> {
+    public static defaultProps = {
+        active: true
+    };
+
     private hilightingState: HighlightingState = new HighlightingState();
 
     constructor(props: ISimpleSelectionLayerProps) {
@@ -36,13 +40,13 @@ export class SimpleWordSelectionLayer extends React.Component<ISimpleSelectionLa
     private prepareObjectModel = () => {
         const { selectedElements } = this.state;
         const { mainTextElements } = this.props;
+
+
         const elements: CanvasElement[] = [];
         
         mainTextElements.forEach(textElement => {
             if (textElement instanceof TextCanvasElement) {
-                textElement.onMouseDown = this.getCharMouseDownHandler(textElement);
-                textElement.onMouseMove = this.getCharMouseMoveHandler(textElement);
-                textElement.onMouseUp = this.getCharMouseUpHandler(textElement);
+                this.bindEventHandlers(textElement);
 
                 const simpleBrushElement = simpleBrushPlugin(textElement, selectedElements);
 
@@ -54,6 +58,17 @@ export class SimpleWordSelectionLayer extends React.Component<ISimpleSelectionLa
 
         return elements;
     };
+
+    private bindEventHandlers = (textElement: TextCanvasElement) => {
+        const { active } = this.props;
+
+        if (active) {
+            textElement.onMouseDown = this.getCharMouseDownHandler(textElement);
+            textElement.onMouseMove = this.getCharMouseMoveHandler(textElement);
+            textElement.onMouseUp = this.getCharMouseUpHandler(textElement);
+        }
+    };
+
 
     private getCharMouseDownHandler = (word: IIndexedCanvasElement) => () => {
         const { selectedElements } = this.state;

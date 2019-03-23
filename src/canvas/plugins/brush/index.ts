@@ -1,7 +1,8 @@
 // export interface SimpleBrush
 export enum HighlightBrusheTypes {
     NONE = 'none',
-    SIMPLE = 'simple',
+    SIMPLE_CHAR = 'simple-char',
+    SIMPLE_WORD = 'simple-word',
     UNICODE = 'unicode',
     UNDERSCORE = 'underscore',
     DOT = 'dot',
