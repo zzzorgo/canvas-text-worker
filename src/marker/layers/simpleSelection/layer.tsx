@@ -8,7 +8,11 @@ import { HighlightingMode, HighlightingState } from 'src/marker/HighlightingStat
 export interface ISimpleSelectionLayerProps {
     mainTextElements: TextCanvasElement[],
     active: boolean,
-    prepareObjectModel: (selectedElements: number[], bindEventHandlers: (element: CanvasElement) => void) => CanvasElement[]
+    prepareObjectModel: (
+        selectedElements: number[],
+        bindEventHandlers: (element: CanvasElement) => void,
+        removeSelectedElement: (element: IIndexedCanvasElement) => void
+    ) => CanvasElement[]
 }
 
 interface ISimpleSelectionLayerState {
@@ -41,10 +45,16 @@ export class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerP
 
         return (
             <CanvasContainer
-                objectModel={prepareObjectModel(selectedElements, this.bindEventHandlers)}
+                objectModel={prepareObjectModel(selectedElements, this.bindEventHandlers, this.removeSelectedElements)}
                 mix="canvas-container-layer" />
         );
     }
+
+    private removeSelectedElements = (element: IIndexedCanvasElement) => {
+        const { selectedElements } = this.state;
+
+        this.setState({ selectedElements: selectedElements.filter(index => element.index !== index)});
+    };
 
     private bindEventHandlers = (elementToSelect: CharCanvasElement) => {
         const { active } = this.props;

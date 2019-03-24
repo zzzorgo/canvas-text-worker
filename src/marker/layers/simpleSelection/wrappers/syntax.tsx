@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { CanvasElement, IPoint } from 'src/canvas/CanvasElement';
+import { CanvasElement, IIndexedCanvasElement, IPoint } from 'src/canvas/CanvasElement';
 import { TextCanvasElement } from 'src/canvas/elements/TextCanvasElement';
 import { underscoreBrushPlugin } from 'src/canvas/plugins/brush';
+import { handleElementMouseEvents } from 'src/canvas/utils/objectModel';
 import { ISubscriberProps } from 'src/marker/MarkerHihghlight';
 import { IMouseMessage } from 'src/message-delivery';
 import { MouseMessageTarget } from '../../hover/target';
@@ -19,11 +20,12 @@ interface ISentenceSyntaxLayerState {
 
 export const sentenceSyntaxObjectModelProvider = (SimpleSelectionComponent: React.ComponentType<ISimpleSelectionLayerProps>) => {
     class SentenceSyntaxLayerWrapper extends React.Component<ISentenceSyntaxLayerProps, ISentenceSyntaxLayerState> {
+        private selectionElements: CanvasElement[];
 
         constructor(props: ISentenceSyntaxLayerProps) {
             super(props);
 
-            const target = new MouseMessageTarget(this.setPointerPosition);
+            const target = new MouseMessageTarget(this.handleMouseMessage);
             props.subscription.subscribe(target);
 
             this.state = {
@@ -43,11 +45,15 @@ export const sentenceSyntaxObjectModelProvider = (SimpleSelectionComponent: Reac
             );
         }
 
-        private setPointerPosition = (message: IMouseMessage) => {
+        private handleMouseMessage = (message: IMouseMessage) => {
             this.setState({ pointerPosition: message.pointerPosition });
-        }
+            handleElementMouseEvents(message.type, this.selectionElements, message);
+        };
 
-        private prepareObjectModel = (selectedElements: number[], bindEventHandlers: (element: CanvasElement) => void) => {
+        private prepareObjectModel = (
+                selectedElements: number[],
+                bindEventHandlers: (element: CanvasElement) => void,
+                removeSelectedElement: (element: IIndexedCanvasElement) => void) => {
             const { mainTextElements } = this.props;
             const { pointerPosition } = this.state;
             const elements: CanvasElement[] = [];
@@ -69,10 +75,16 @@ export const sentenceSyntaxObjectModelProvider = (SimpleSelectionComponent: Reac
                             };
                         }
 
+                        simpleBrushElement.onClick = () => {
+                            removeSelectedElement(textElement);
+                        };
+
                         elements.push(simpleBrushElement);
                     }
                 }
             });
+
+            this.selectionElements = elements;
 
             return elements;
         }

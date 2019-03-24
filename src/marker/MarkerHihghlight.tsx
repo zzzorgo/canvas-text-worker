@@ -69,7 +69,8 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                     style={{ height: canvasSize.height / VIEW_PORT_SCALE }}
                     onMouseMove={this.deliverMouseMoveMessage}
                     onMouseDown={this.deliverMouseDownMessage}
-                    onMouseUp={this.deliverMouseUpMessage}>
+                    onMouseUp={this.deliverMouseUpMessage}
+                    onClick={this.deliverMouseClickMessage}>
                         <CharSimpleSelectionLayer
                             active={selectedBrush === HighlightBrusheTypes.SIMPLE_CHAR}
                             mainTextElements={mainTextElements} />
@@ -98,12 +99,16 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
 
     private deliverMouseDownMessage = (e: MouseEvent) => {
         this.deliverMouseMessage(MessageType.mouseDown, e);
-
     };
 
     private deliverMouseUpMessage = (e: MouseEvent) => {
         this.deliverMouseMessage(MessageType.mouseUp, e);
+    };
 
+    private deliverMouseClickMessage = (e: MouseEvent) => {
+        //tslint:disable
+        console.log(2);
+        this.deliverMouseMessage(MessageType.mouseClick, e);
     };
 
     private deliverMouseMessage = (type: MessageType, e: MouseEvent) => {

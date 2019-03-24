@@ -37,5 +37,6 @@ export class MessageDelivery implements IMessageDelivery {
 export enum MessageType {
     mouseMove = 'onMouseMove',
     mouseDown = 'onMouseDown',
-    mouseUp = 'onMouseUp'
+    mouseUp = 'onMouseUp',
+    mouseClick = 'onClick'
 }
