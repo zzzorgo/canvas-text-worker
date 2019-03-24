@@ -5,7 +5,8 @@ import { CharCanvasElement } from 'src/canvas/elements/CharCanvasElement';
 import { TextCanvasElement } from 'src/canvas/elements/TextCanvasElement';
 import { hoverPlugin } from 'src/canvas/plugins/hover';
 import { ISubscriberProps } from 'src/marker/MarkerHihghlight';
-import { HoverLayerTarget } from './target';
+import { IMouseMessage } from 'src/message-delivery';
+import { MouseMessageTarget } from './target';
 
 interface IHoverLayerProps extends ISubscriberProps {
     mainTextElements: TextCanvasElement[]
@@ -19,7 +20,7 @@ export class HoverLayer extends React.Component<IHoverLayerProps, IHoverLayerSta
     constructor(props: IHoverLayerProps) {
         super(props);
         
-        const target = new HoverLayerTarget(this.setPointerPosition);
+        const target = new MouseMessageTarget(this.setPointerPosition);
         props.subscription.subscribe(target);
         
         this.state = {
@@ -60,7 +61,7 @@ export class HoverLayer extends React.Component<IHoverLayerProps, IHoverLayerSta
         return elements;
     };
 
-    private setPointerPosition = (pointerPosition: IPoint) => {
-        this.setState({ pointerPosition });
+    private setPointerPosition = (message: IMouseMessage) => {
+        this.setState({ pointerPosition: message.pointerPosition });
     }
 }

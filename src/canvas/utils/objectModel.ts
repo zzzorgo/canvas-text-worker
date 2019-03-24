@@ -7,6 +7,7 @@ import { TextCanvasElement } from '../elements/TextCanvasElement';
 
 const WORD_REG = /([\w\dА-Яа-яёЁ]+)/;
 const SPLIT_TEXT_REG = /([^\w\dА-Яа-яёЁ]+)|([\w\dА-Яа-яёЁ]+)/g;
+const SENTECE_SYNTAX_LINE_MARGIN = 40;
 
 export interface ITextParams {
     text: string,
@@ -46,7 +47,7 @@ export function getElementsFromText(canvasParams: ICanvasParams, textParams: ITe
         const shouldBreakLine = blockIsTooBig && isWordBlock;
 
         if (shouldBreakLine) {
-            offset.y += lineHeight; 
+            offset.y += lineHeight + SENTECE_SYNTAX_LINE_MARGIN; 
             offset.x = TEXT_PADDING;
         } 
 

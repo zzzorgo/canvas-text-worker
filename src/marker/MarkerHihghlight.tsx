@@ -70,15 +70,16 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                     onMouseMove={this.deliverMouseMoveMessage}
                     onMouseDown={this.deliverMouseDownMessage}
                     onMouseUp={this.deliverMouseUpMessage}>
-                        <SentenceSyntaxLayer
-                            active={selectedBrush === HighlightBrusheTypes.UNDERSCORE}
-                            mainTextElements={mainTextElements} />
                         <CharSimpleSelectionLayer
                             active={selectedBrush === HighlightBrusheTypes.SIMPLE_CHAR}
                             mainTextElements={mainTextElements} />
                         <WordSimpleSelectionLayer
                             active={selectedBrush === HighlightBrusheTypes.SIMPLE_WORD}
                             mainTextElements={mainTextElements} />
+                        <SentenceSyntaxLayer
+                            active={selectedBrush === HighlightBrusheTypes.UNDERSCORE}
+                            mainTextElements={mainTextElements}
+                            subscription={this.messageDelivery} />
                         <HoverLayer
                             subscription={this.messageDelivery}
                             mainTextElements={mainTextElements} />

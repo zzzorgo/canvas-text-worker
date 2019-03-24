@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { CanvasContainer } from 'src/canvas/CanvasContainer';
-import { CanvasElement, IIndexedCanvasElement } from 'src/canvas/CanvasElement';
+import { CanvasElement, IIndexedCanvasElement, IPoint } from 'src/canvas/CanvasElement';
 import { CharCanvasElement } from 'src/canvas/elements/CharCanvasElement';
 import { TextCanvasElement } from 'src/canvas/elements/TextCanvasElement';
 import { HighlightingMode, HighlightingState } from 'src/marker/HighlightingState';
@@ -12,7 +12,8 @@ export interface ISimpleSelectionLayerProps {
 }
 
 interface ISimpleSelectionLayerState {
-    selectedElements: number[]
+    selectedElements: number[],
+    pointerPosition: IPoint
 }
 
 export class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerProps, ISimpleSelectionLayerState> {
@@ -26,7 +27,11 @@ export class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerP
         super(props);
 
         this.state = {
-            selectedElements: [0, 1, 2, 3]
+            selectedElements: [0, 1, 2, 3],
+            pointerPosition: {
+                x: 0,
+                y: 0
+            }
         }
     }
 

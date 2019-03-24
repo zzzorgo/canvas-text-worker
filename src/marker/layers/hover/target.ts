@@ -1,17 +1,14 @@
-import { IPoint } from 'src/canvas/CanvasElement';
-import { IDeliveryTarget, IMessage, IMouseMessage, MessageType } from 'src/message-delivery';
+import { MouseEventHandler } from 'src/marker/MarkerHihghlight';
+import { IDeliveryTarget, IMessage } from 'src/message-delivery';
 
-export class HoverLayerTarget implements IDeliveryTarget {
-    private hoverHandler: (pointerPosition: IPoint) => void;
+export class MouseMessageTarget implements IDeliveryTarget {
+    private handler: MouseEventHandler;
 
-    constructor(hoverHandler: (pointerPosition: IPoint) => void) {
-        this.hoverHandler = hoverHandler;
+    constructor(handler: MouseEventHandler) {
+        this.handler = handler;
     }
 
     public handleMessage(message: IMessage) {
-        if (message.type === MessageType.mouseMove) {
-            const hoverMessage = message as IMouseMessage;
-            this.hoverHandler(hoverMessage.pointerPosition);
-        }
+        this.handler(message);
     }
 }

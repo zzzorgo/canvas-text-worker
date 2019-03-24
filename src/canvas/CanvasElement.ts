@@ -1,4 +1,5 @@
-import { MouseEvent, VIEW_PORT_SCALE } from './constants';
+import { IMouseMessage } from 'src/message-delivery';
+import { VIEW_PORT_SCALE } from './constants';
 
 export interface IPoint {
     x: number,
@@ -36,23 +37,23 @@ export abstract class CanvasElement {
 
     public getIsHit = () => this.isHit;
 
-    public onClick = (e: MouseEvent) => {
+    public onClick = (e: IMouseMessage) => {
         return;
     }
 
-    public onMouseDown = (e: MouseEvent) => {
+    public onMouseDown = (e: IMouseMessage) => {
         return;
     }
 
-    public onMouseUp = (e: MouseEvent) => {
+    public onMouseUp = (e: IMouseMessage) => {
         return;
     }
 
-    public onMouseMove = (e: MouseEvent) => {
+    public onMouseMove = (e: IMouseMessage) => {
         return;
     }
 
-    public onContextMenu = (e: MouseEvent) => {
+    public onContextMenu = (e: IMouseMessage) => {
         return;
     }
 
