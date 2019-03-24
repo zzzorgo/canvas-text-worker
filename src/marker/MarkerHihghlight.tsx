@@ -9,8 +9,11 @@ import { getElementsFromText, getTextParams, handleElementMouseEvents } from '..
 import './MarkerHihghlight.css';
 import { HoverLayer } from './layers/hover/component';
 import { HighlightBrusheTypes } from 'src/canvas/plugins/brush';
-import { CharSimpleSelectionLayer } from './layers/simpleSelection';
-import { WordSimpleSelectionLayer } from './layers/simpleSelection';
+import {
+    CharSimpleSelectionLayer,
+    SentenceSyntaxLayer,
+    WordSimpleSelectionLayer
+} from './layers/simpleSelection';
 
 export type MouseEventHandler = (message: IMessage) => void;
 
@@ -59,7 +62,7 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                 <div>
                     <button onClick={this.selectSimpleHighlight}>1</button>
                     <button onClick={this.selectUnicodeHighlight}>2</button>
-                    {/* <button onClick={this.selectUnderscoreHighlight}>3</button> */}
+                    <button onClick={this.selectUnderscoreHighlight}>3</button>
                 </div>
                 <div
                     className="layers"
@@ -67,6 +70,9 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                     onMouseMove={this.deliverMouseMoveMessage}
                     onMouseDown={this.deliverMouseDownMessage}
                     onMouseUp={this.deliverMouseUpMessage}>
+                        <SentenceSyntaxLayer
+                            active={selectedBrush === HighlightBrusheTypes.UNDERSCORE}
+                            mainTextElements={mainTextElements} />
                         <CharSimpleSelectionLayer
                             active={selectedBrush === HighlightBrusheTypes.SIMPLE_CHAR}
                             mainTextElements={mainTextElements} />
@@ -149,7 +155,7 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
         this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE_WORD });
     };
 
-    // private selectUnderscoreHighlight = () => {
-    //     this.setState({ selectedBrush: HighlightBrusheTypes.UNDERSCORE });
-    // };
+    private selectUnderscoreHighlight = () => {
+        this.setState({ selectedBrush: HighlightBrusheTypes.UNDERSCORE });
+    };
 }

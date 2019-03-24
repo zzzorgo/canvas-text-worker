@@ -2,8 +2,9 @@ import { IIndexedCanvasElement } from '../../CanvasElement';
 import { RectCanvasElement } from '../../elements/RectCanvasElement';
 
 export function underscoreBrushPlugin(element: IIndexedCanvasElement, highlightedElements: number[]) {
+    const highlight = new RectCanvasElement();
+
     if (highlightedElements.includes(element.index)) {
-        const highlight = new RectCanvasElement();
         highlight.rect = {
             height: 4,
             width: element.rect.width,
@@ -12,7 +13,7 @@ export function underscoreBrushPlugin(element: IIndexedCanvasElement, highlighte
         };
         highlight.fillStyle = 'black';
         highlight.alpha = 0.5;
-
-        element.children.push(highlight);
     }
+
+    return highlight;
 };
