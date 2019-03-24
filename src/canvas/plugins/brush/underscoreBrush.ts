@@ -6,7 +6,7 @@ export function underscoreBrushPlugin(element: IIndexedCanvasElement, highlighte
 
     if (highlightedElements.includes(element.index)) {
         highlight.rect = {
-            height: 4,
+            height: 40,
             width: element.rect.width,
             x: element.rect.x,
             y: element.rect.y + element.rect.height

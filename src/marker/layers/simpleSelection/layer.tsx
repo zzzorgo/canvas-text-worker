@@ -59,19 +59,21 @@ export class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerP
         this.hilightingState.mode = alreadyHighlighted ? HighlightingMode.REMOVING : HighlightingMode.ADDING;
     }
     
-    private getElementMouseMoveHandler = (element: IIndexedCanvasElement) => () => {
-        this.updateHighlightedChars(element);
+    private getElementMouseMoveHandler = (element: IIndexedCanvasElement) => () => {       
+        this.updateHighlightedElements(element);
     };
     
     private getElementMouseUpHandler = (element: IIndexedCanvasElement) => () => {
-        this.updateHighlightedChars(element);
+        this.updateHighlightedElements(element);
         this.hilightingState.mode = HighlightingMode.STAND_BY;
     }
 
-    private updateHighlightedChars = (element: IIndexedCanvasElement) => {
+    private updateHighlightedElements = (element: IIndexedCanvasElement) => {
         const { selectedElements } = this.state;
-        const newSelectedElements = this.hilightingState.getNewHighlightedChars(element.index, selectedElements);
+        const newSelectedElements = this.hilightingState.getNewHighlightedElements(element.index, selectedElements);
 
-        this.setState({ selectedElements: newSelectedElements });
+        if (selectedElements !== newSelectedElements) {
+            this.setState({ selectedElements: newSelectedElements });
+        }
     };
 }
