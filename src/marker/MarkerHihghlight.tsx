@@ -7,10 +7,10 @@ import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../canvas/constants';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
 import { getElementsFromText, getTextParams, handleElementMouseEvents } from '../canvas/utils/objectModel';
 import './MarkerHihghlight.css';
-import { SimpleSelectionLayer } from './layers/simpleSelection/component';
 import { HoverLayer } from './layers/hover/component';
-import { SimpleWordSelectionLayer } from './layers/simpleWordSelection/component';
 import { HighlightBrusheTypes } from 'src/canvas/plugins/brush';
+import { CharSimpleSelectionLayer } from './layers/simpleSelection';
+import { WordSimpleSelectionLayer } from './layers/simpleSelection';
 
 export type MouseEventHandler = (message: IMessage) => void;
 
@@ -67,10 +67,10 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                     onMouseMove={this.deliverMouseMoveMessage}
                     onMouseDown={this.deliverMouseDownMessage}
                     onMouseUp={this.deliverMouseUpMessage}>
-                        <SimpleSelectionLayer
+                        <CharSimpleSelectionLayer
                             active={selectedBrush === HighlightBrusheTypes.SIMPLE_CHAR}
                             mainTextElements={mainTextElements} />
-                        <SimpleWordSelectionLayer
+                        <WordSimpleSelectionLayer
                             active={selectedBrush === HighlightBrusheTypes.SIMPLE_WORD}
                             mainTextElements={mainTextElements} />
                         <HoverLayer
