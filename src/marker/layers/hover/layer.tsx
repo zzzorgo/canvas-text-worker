@@ -6,7 +6,7 @@ import { TextCanvasElement } from 'src/canvas/elements/TextCanvasElement';
 import { hoverPlugin } from 'src/canvas/plugins/hover';
 import { ISubscriberProps } from 'src/marker/MarkerHihghlight';
 import { IMouseMessage } from 'src/message-delivery';
-import { MouseMessageTarget } from './target';
+import { MouseMessageTarget } from '../../../message-delivery/target';
 
 interface IHoverLayerProps extends ISubscriberProps {
     mainTextElements: TextCanvasElement[]

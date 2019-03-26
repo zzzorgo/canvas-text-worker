@@ -1,22 +1,18 @@
 import * as React from 'react';
 import { CanvasContainer } from 'src/canvas/CanvasContainer';
 import { CanvasElement, IIndexedCanvasElement, IPoint } from 'src/canvas/CanvasElement';
-import { CharCanvasElement } from 'src/canvas/elements/CharCanvasElement';
-import { TextCanvasElement } from 'src/canvas/elements/TextCanvasElement';
 import { HighlightingMode, HighlightingState } from 'src/marker/HighlightingState';
+import { ISubscription } from 'src/message-delivery';
 
 export interface ISimpleSelectionLayerProps {
-    mainTextElements: TextCanvasElement[],
+    mainTextElements: IIndexedCanvasElement[],
     active: boolean,
-    prepareObjectModel: (
-        selectedElements: number[],
-        bindEventHandlers: (element: CanvasElement) => void,
-        removeSelectedElement: (element: IIndexedCanvasElement) => void
-    ) => CanvasElement[]
+    subscription?: ISubscription
 }
 
 interface ISimpleSelectionLayerState {
     selectedElements: number[],
+    hoveredSyntaxElementIndex: number,
     pointerPosition: IPoint
 }
 
@@ -24,6 +20,8 @@ export class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerP
     public static defaultProps = {
         active: true
     };
+
+    protected prepareObjectModel: (selectedElements: number[]) => CanvasElement[];
     
     private hilightingState: HighlightingState = new HighlightingState();
 
@@ -32,31 +30,26 @@ export class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerP
 
         this.state = {
             selectedElements: [0, 1, 2, 3],
+            hoveredSyntaxElementIndex: -1,
             pointerPosition: {
                 x: 0,
                 y: 0
             }
         }
     }
-
+    
     public render() {
-        const { prepareObjectModel } = this.props;
         const { selectedElements } = this.state;
-
+        
         return (
             <CanvasContainer
-                objectModel={prepareObjectModel(selectedElements, this.bindEventHandlers, this.removeSelectedElements)}
+                objectModel={this.prepareObjectModel(selectedElements)}
                 mix="canvas-container-layer" />
-        );
-    }
+            );
+        }
+        
 
-    private removeSelectedElements = (element: IIndexedCanvasElement) => {
-        const { selectedElements } = this.state;
-
-        this.setState({ selectedElements: selectedElements.filter(index => element.index !== index)});
-    };
-
-    private bindEventHandlers = (elementToSelect: CharCanvasElement) => {
+    protected bindEventHandlers = (elementToSelect: IIndexedCanvasElement) => {
         const { active } = this.props;
 
         if (active) {
@@ -69,8 +62,10 @@ export class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerP
     private getElementMouseDownHandler = (element: IIndexedCanvasElement) => () => {
         const { selectedElements } = this.state;
         const alreadyHighlighted = selectedElements.includes(element.index);
-    
+        
         this.hilightingState.start = element.index;
+        //tslint:disable
+        console.log(1);
         this.hilightingState.mode = alreadyHighlighted ? HighlightingMode.REMOVING : HighlightingMode.ADDING;
     }
     
@@ -91,4 +86,10 @@ export class SimpleSelectionLayer extends React.Component<ISimpleSelectionLayerP
             this.setState({ selectedElements: newSelectedElements });
         }
     };
+
+    // private layerMouseUpHandler = () => {
+    //     console.log(123);
+    //     console.log(this.hilightingState);
+    //     this.hilightingState.mode = HighlightingMode.STAND_BY;
+    // };
 }

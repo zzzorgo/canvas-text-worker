@@ -7,7 +7,7 @@ import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../canvas/constants';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
 import { getElementsFromText, getTextParams, handleElementMouseEvents } from '../canvas/utils/objectModel';
 import './MarkerHihghlight.css';
-import { HoverLayer } from './layers/hover/component';
+import { HoverLayer } from './layers/hover/layer';
 import { HighlightBrusheTypes } from 'src/canvas/plugins/brush';
 import {
     CharSimpleSelectionLayer,

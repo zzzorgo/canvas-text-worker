@@ -1,9 +1,9 @@
 import * as _ from 'lodash';
 
 export enum HighlightingMode {
-    STAND_BY,
-    ADDING,
-    REMOVING
+    STAND_BY = 'stand-by',
+    ADDING = 'adding',
+    REMOVING = 'removing'
 }
 
 export class HighlightingState {
