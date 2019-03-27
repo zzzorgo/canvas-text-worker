@@ -1,20 +1,13 @@
+import { IMouseMessage } from 'src/message-delivery';
 import { RenderPlugin } from '../CanvasContainer';
 import { CanvasElement, ICanvasParams, IPoint } from '../CanvasElement';
-import { getFontSetting, MouseEvent, VIEW_PORT_SCALE } from '../constants';
+import { getFontSetting, VIEW_PORT_SCALE } from '../constants';
 import { CharCanvasElement } from '../elements/CharCanvasElement';
 import { TextCanvasElement } from '../elements/TextCanvasElement';
 
-// export function setHitElements(ctx: CanvasRenderingContext2D, elements: CanvasElement[], pointer: IPoint) {
-//     const {x, y} = pointer;
-
-//     elements.forEach((element) => {
-//         element.setIsHit(x, y);
-//         setHitElements(ctx, element.children, pointer);
-//     });
-// }
-
 const WORD_REG = /([\w\dА-Яа-яёЁ]+)/;
 const SPLIT_TEXT_REG = /([^\w\dА-Яа-яёЁ]+)|([\w\dА-Яа-яёЁ]+)/g;
+const SENTECE_SYNTAX_LINE_MARGIN = 40;
 
 export interface ITextParams {
     text: string,
@@ -54,7 +47,7 @@ export function getElementsFromText(canvasParams: ICanvasParams, textParams: ITe
         const shouldBreakLine = blockIsTooBig && isWordBlock;
 
         if (shouldBreakLine) {
-            offset.y += lineHeight; 
+            offset.y += lineHeight + SENTECE_SYNTAX_LINE_MARGIN; 
             offset.x = TEXT_PADDING;
         } 
 
@@ -109,13 +102,13 @@ export function getElementsFromText(canvasParams: ICanvasParams, textParams: ITe
     return blocks;
 }
 
-export function handleElementMouseEvents(eventName: string, elements: CanvasElement[], e: MouseEvent) {
+export function handleElementMouseEvents(eventName: string, elements: CanvasElement[], message: IMouseMessage) {
     elements.forEach(element => {
-        if (element.getIsHit()) {
-            element[eventName](e);
+        if (element.setIsHit(message.pointerPosition.x, message.pointerPosition.y)) {
+            element[eventName](message);
         }
 
-        handleElementMouseEvents(eventName, element.children, e);
+        handleElementMouseEvents(eventName, element.children, message);
     });
 }
 
@@ -128,4 +121,16 @@ export function toggleArrayElement(array: any[], element: any) : any[] {
     } else {
         return array.filter(oldElement => oldElement !== element);
     }
+}
+
+export function findElements(elements: CanvasElement[], predicate: (element: CanvasElement) => boolean): CanvasElement[] {
+    return elements.reduce((acc: CanvasElement[], element) => {
+        if (predicate(element)) {
+            acc.push(element);
+        }
+
+        acc.concat(findElements(element.children, predicate));
+        
+        return acc;
+    }, []);
 }

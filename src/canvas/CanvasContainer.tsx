@@ -1,26 +1,25 @@
 import * as React from 'react';
-
-import { CanvasElement, ICanvasParams, IPoint } from './CanvasElement';
-import { INITIAL_CANVAS_HEIGHT, MouseEvent, VIEW_PORT_SCALE } from './constants';
-import { handleElementMouseEvents } from './utils/objectModel';
+import { CanvasElement, ICanvasParams } from './CanvasElement';
+import { INITIAL_CANVAS_HEIGHT, VIEW_PORT_SCALE } from './constants';
 import { clearCanvas, renderWithChildren } from './utils/render';
 
 export type RenderPlugin = (element: CanvasElement, canvasParams?: ICanvasParams) => void;
 
+// tslint:disable-next-line:no-empty-interface
 interface ICanvasContainerState {
-    canvasHeight: number,
-    canvasWidth: number
+    canvasWidth: number,
+    canvasHeight: number
 }
 
 interface ICanvasContainerProps {
-    prepareObjectModel: (canvasParams: ICanvasParams) => CanvasElement[],
-    onMouseMove: (pointerPosition: IPoint) => void
+    mix?: string,
+    onContextReady?: (canvasWidth: number, canvasHeight: number, ctx?: CanvasRenderingContext2D) => void,
+    objectModel: CanvasElement[]
 }
 
 export class CanvasContainer extends React.Component<ICanvasContainerProps, ICanvasContainerState> {
     private canvas: HTMLCanvasElement | null;
     private ctx: CanvasRenderingContext2D | null;
-    private elements: CanvasElement[];
 
     constructor(props: ICanvasContainerProps) {
         super(props);
@@ -36,7 +35,15 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
             const ctx = this.canvas.getContext('2d');
             if (!ctx) { return; }
             this.ctx = ctx;
+            const { canvasHeight, canvasWidth } = this.state;
             
+            
+            if (this.props.onContextReady) {
+                this.props.onContextReady(canvasWidth, canvasHeight, ctx);
+            }
+            
+            this.handleResize();
+
             this.prepareObjectModelAndRender();
         }
 
@@ -52,15 +59,12 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
     }
     
     public render() {
-        const { canvasWidth, canvasHeight } = this.state;
+        const { canvasHeight, canvasWidth } = this.state;
+        const { mix } = this.props;
 
         return (
             <canvas
-                onMouseDown={this.handleCanvasMouseDown}
-                onMouseUp={this.handleCanvasMouseUp}
-                onClick={this.handleCanvasClick}
-                onContextMenu={this.handleCanvasContextMenu}
-                onMouseMove={this.handleCanvasMouseMove}
+                className={mix}
                 width={canvasWidth}
                 height={canvasHeight}
                 ref={ref => this.canvas = ref} 
@@ -72,21 +76,28 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
     }   
 
     private handleResize = () => {
+        const canvasWidth = window.innerWidth * VIEW_PORT_SCALE;
+        const canvasHeight = INITIAL_CANVAS_HEIGHT;
+
         this.setState({
-            canvasWidth: window.innerWidth * VIEW_PORT_SCALE
+            canvasWidth,
+            canvasHeight
         });
+
+        if (this.props.onContextReady) {
+            this.props.onContextReady(canvasWidth, canvasHeight);
+        }
     }
 
     private prepareObjectModelAndRender() {
         const { ctx } = this;
         if (!ctx) { return; }
 
-        const { prepareObjectModel } = this.props;
+        const { objectModel } = this.props;
         const { canvasWidth, canvasHeight } = this.state;
         const canvasParams = {ctx, width: canvasWidth, height: canvasHeight};
 
-        const elements = prepareObjectModel(canvasParams);
-        this.elements = elements;
+        const elements = objectModel;
         this.renderOnCanvas(canvasParams, elements);
     }
     
@@ -97,28 +108,4 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
             renderWithChildren(canvasParams, element);
         });
     }
-
-    private handleCanvasClick = (e: MouseEvent) => {
-        handleElementMouseEvents('onClick', this.elements, e);
-    };
-
-    private handleCanvasMouseDown = (e: MouseEvent) => {
-        handleElementMouseEvents('onMouseDown', this.elements, e);
-    };
-
-    private handleCanvasMouseUp = (e: MouseEvent) => {
-        handleElementMouseEvents('onMouseUp', this.elements, e);
-    };
-
-    private handleCanvasContextMenu = (e: MouseEvent) => {
-        e.preventDefault();
-        handleElementMouseEvents('onContextMenu', this.elements, e);
-    };
-
-    private handleCanvasMouseMove = (e: MouseEvent) => {
-        const { onMouseMove } = this.props;
-        const pointerPosition = {x: e.clientX, y: e.clientY};
-        onMouseMove(pointerPosition);
-        handleElementMouseEvents('onMouseMove', this.elements, e);
-    };
 }

@@ -1,169 +1,179 @@
-import * as _ from 'lodash';
+/* tslint:disable */
 import * as React from 'react';
-
+import { MessageDelivery, ISubscription, IMessage, MessageType } from 'src/message-delivery';
 import { CanvasContainer } from '../canvas/CanvasContainer';
-import { CanvasElement, ICanvasParams, IPoint } from '../canvas/CanvasElement';
-import { INITIAL_HIGHLIGHTED_WORDS, TEXT } from '../canvas/constants';
-import { CharCanvasElement } from '../canvas/elements/CharCanvasElement';
+import { CanvasElement, ISize } from '../canvas/CanvasElement';
+import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../canvas/constants';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
+import { getElementsFromText, getTextParams, handleElementMouseEvents } from '../canvas/utils/objectModel';
+import './MarkerHihghlight.css';
+import { HoverLayer } from './layers/hover/layer';
+import { HighlightBrusheTypes } from 'src/canvas/plugins/brush';
 import {
-    HighlightBrusheTypes,
-    simpleBrushPlugin,
-    underscoreBrushPlugin,
-    unicodeBrushPlugin 
-} from '../canvas/plugins/brush';
-import { hoverPlugin } from '../canvas/plugins/hover';
-import { setIsHitPlugin } from '../canvas/plugins/setIsHit';
-import { getElementsFromText, getTextParams, toggleArrayElement } from '../canvas/utils/objectModel';
+    CharSimpleSelectionLayer,
+    SentenceSyntaxLayer,
+    WordSimpleSelectionLayer
+} from './layers/simpleSelection';
+import { SentenceParts } from './layers/simpleSelection/wrappers/syntax/mechanics';
 
-import { HighlightingMode, HighlightingState } from './HighlightingState';
+export type MouseEventHandler = (message: IMessage) => void;
 
 export type RenderPlugin = (element: CanvasElement) => void;
 
-interface IBrushesState {
-    [HighlightBrusheTypes.NONE]: number[],
-    [HighlightBrusheTypes.SIMPLE]: number[],
-    [HighlightBrusheTypes.UNICODE]: number[],
-    [HighlightBrusheTypes.UNDERSCORE]: number[]
+export interface ISubscriberProps {
+    subscription: ISubscription    
 }
 
 interface IMarkerHighlightState {
-    brushes: IBrushesState,
-    highlightedWords: number[],
-    pointerPosition: IPoint,
-    selectedBrush: HighlightBrusheTypes,
-    text: string
+    highlightedWords: number[]
+    text: string,
+    canvasSize: ISize,
+    ctx?: CanvasRenderingContext2D,
+    selectedBrush: HighlightBrusheTypes
 }
 
-export class MarkerHighlight extends React.Component<{}, IMarkerHighlightState> {
-    private hilightingState: HighlightingState = new HighlightingState();
+interface IMarkerHighlightProps {
+}
 
-    constructor(props: {}) {
+export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMarkerHighlightState> {
+    private mainTextElements: TextCanvasElement[];
+    private messageDelivery: MessageDelivery = new MessageDelivery();
+
+    constructor(props: IMarkerHighlightProps) {
         super(props);
 
         this.state = {
-            brushes: {
-                [HighlightBrusheTypes.NONE]: [],
-                [HighlightBrusheTypes.SIMPLE]: [],
-                [HighlightBrusheTypes.UNICODE]: [],
-                [HighlightBrusheTypes.UNDERSCORE]: []
+            highlightedWords: [],
+            text: TEXT,
+            canvasSize: {
+                width: 0,
+                height: 0
             },
-            highlightedWords: INITIAL_HIGHLIGHTED_WORDS,
-            pointerPosition: {x: -1, y: -1},
-            selectedBrush: HighlightBrusheTypes.NONE,
-            text: TEXT
+            selectedBrush: HighlightBrusheTypes.SIMPLE_CHAR
         }
     }
 
     public render() {
+        const { canvasSize, selectedBrush } = this.state;
+        const mainTextElements = this.prepareObjectModel();
+        console.log('heavy render');
+
         return (
             <div>
-                <CanvasContainer
-                    prepareObjectModel={this.prepareObjectModel}
-                    onMouseMove={this.setPointerPosition} />
-                <div style={{display: 'flex', justifyContent: 'center'}}>
+                <div>
                     <button onClick={this.selectSimpleHighlight}>1</button>
                     <button onClick={this.selectUnicodeHighlight}>2</button>
-                    <button onClick={this.selectUnderscoreHighlight}>3</button>
+                    <button onClick={this.selectSubjectHighlight}>подлежащее</button>
+                    <button onClick={this.selectPredicateHighlight}>сказуемое</button>
+                </div>
+                <div
+                    className="layers"
+                    style={{ height: canvasSize.height / VIEW_PORT_SCALE }}
+                    onMouseMove={this.deliverMouseMoveMessage}
+                    onMouseDown={this.deliverMouseDownMessage}
+                    onMouseUp={this.deliverMouseUpMessage}
+                    onClick={this.deliverMouseClickMessage}>
+                        <CharSimpleSelectionLayer
+                            active={selectedBrush === HighlightBrusheTypes.SIMPLE_CHAR}
+                            mainTextElements={mainTextElements}
+                            subscription={this.messageDelivery} />
+                        <WordSimpleSelectionLayer
+                            active={selectedBrush === HighlightBrusheTypes.SIMPLE_WORD}
+                            mainTextElements={mainTextElements}
+                            subscription={this.messageDelivery} />
+                        <SentenceSyntaxLayer
+                            sentencePart={SentenceParts.SUBJECT}
+                            active={selectedBrush === HighlightBrusheTypes.SUBJECT}
+                            mainTextElements={mainTextElements}
+                            subscription={this.messageDelivery} />
+                        <SentenceSyntaxLayer
+                            sentencePart={SentenceParts.PREDICATE}
+                            active={selectedBrush === HighlightBrusheTypes.PREDICATE}
+                            mainTextElements={mainTextElements}
+                            subscription={this.messageDelivery} />
+                        <HoverLayer
+                            subscription={this.messageDelivery}
+                            mainTextElements={mainTextElements} />
+                        <CanvasContainer
+                            objectModel={mainTextElements}
+                            mix="canvas-container-layer"
+                            onContextReady={this.setCanvasContext} />
                 </div>
             </div>
         );
     }
 
-    private setPointerPosition = (pointerPosition: IPoint) => {
-        this.setState({pointerPosition});
-    }
-
-    private charPlugin = (char: CharCanvasElement, canvasParams: ICanvasParams) => {
-        const { brushes, pointerPosition } = this.state;
-
-        setIsHitPlugin(char, pointerPosition);
-        hoverPlugin(char);
-        simpleBrushPlugin(char, brushes[HighlightBrusheTypes.SIMPLE]);
-        unicodeBrushPlugin(char, brushes[HighlightBrusheTypes.UNICODE], canvasParams);
-        underscoreBrushPlugin(char, brushes[HighlightBrusheTypes.UNDERSCORE]);
-    }
-
-    private wordPlugin = (word: TextCanvasElement) => {
-        const { highlightedWords, pointerPosition } = this.state;
-
-        setIsHitPlugin(word, pointerPosition);
-        hoverPlugin(word, 'black', 0.1);
-        simpleBrushPlugin(word, highlightedWords);
-    }
-
-    private prepareObjectModel = (canvasParams: ICanvasParams) => {
-        const { text } = this.state;
-
-        const textParams = getTextParams(text, 50, {x: 0, y: 0});
-        const elements = getElementsFromText(canvasParams, textParams, this.wordPlugin, this.charPlugin);
-        this.bindEventHandlers(elements);
-
-        return elements;
-    }
-
-    private bindEventHandlers = (elements: CanvasElement[]) => {
-        elements.forEach(word => {
-            if (word instanceof TextCanvasElement) {
-                word.onContextMenu = this.getWordContexMenuHandler(word);
-            }
-
-            word.children.forEach(char => {
-                if (char instanceof CharCanvasElement) {
-                    char.onMouseDown = this.getCharMouseDownHandler(char);
-                    char.onMouseMove = this.getCharMouseMoveHandler(char);
-                    char.onMouseUp = this.getCharMouseUpHandler(char);
-                }
-            }
-        )});
-    }
-
-    private updateHighlightedChars = (char: CharCanvasElement) => {
-        const { brushes, selectedBrush } = this.state;
-
-        const newHighlightedChars = this.hilightingState.getNewHighlightedChars(char.index, brushes[selectedBrush]);
-        const newBrushes = {
-            ...brushes,
-            [selectedBrush]: newHighlightedChars
-        };
-
-        this.setState({brushes: newBrushes});
+    private deliverMouseMoveMessage = (e: MouseEvent) => {
+        this.deliverMouseMessage(MessageType.mouseMove, e);
     };
 
-    /// Event handlers
+    private deliverMouseDownMessage = (e: MouseEvent) => {
+        this.deliverMouseMessage(MessageType.mouseDown, e);
+    };
 
-    private getCharMouseDownHandler = (char: CharCanvasElement) => () => {
-        const { brushes, selectedBrush } = this.state;
-        const alreadyHighlighted = brushes[selectedBrush].includes(char.index);
+    private deliverMouseUpMessage = (e: MouseEvent) => {
+        this.deliverMouseMessage(MessageType.mouseUp, e);
+    };
+
+    private deliverMouseClickMessage = (e: MouseEvent) => {
+        this.deliverMouseMessage(MessageType.mouseClick, e);
+    };
+
+    private deliverMouseMessage = (type: MessageType, e: MouseEvent) => {
+        const x = e.nativeEvent.offsetX;
+        const y = e.nativeEvent.offsetY;
+        const message = {
+            type,
+            pointerPosition: {x, y}
+        }
         
-        this.hilightingState.start = char.index;
-        this.hilightingState.mode = alreadyHighlighted ? HighlightingMode.REMOVING : HighlightingMode.ADDING;
-    }
-    
-    private getCharMouseMoveHandler = (char: CharCanvasElement) => () => {
-        this.updateHighlightedChars(char);
+        this.messageDelivery.dispatchMessage(message);
+        handleElementMouseEvents(message.type, this.mainTextElements, message);
     };
-  
-    private getCharMouseUpHandler = (char: CharCanvasElement) => () => {
-        this.updateHighlightedChars(char);
-        this.hilightingState.mode = HighlightingMode.STAND_BY;
+
+    private setCanvasContext = (width: number, height: number, ctx?: CanvasRenderingContext2D) => {
+        if (!ctx) {
+            this.setState({
+                canvasSize: { width, height }
+            });
+        } else {
+            this.setState({
+                canvasSize: { width, height },
+                ctx
+            });
+        }
     }
 
-    private getWordContexMenuHandler = (word: TextCanvasElement) => () => {
-        this.setState({
-            highlightedWords: toggleArrayElement(this.state.highlightedWords, word.index)
-        });
+    private prepareObjectModel = () => {
+        const { text, canvasSize, ctx } = this.state;
+
+        if (ctx) {
+            const canvasParams = {
+                ctx,
+                ...canvasSize
+            };
+            const textParams = getTextParams(text, 50, { x: 0, y: 0 });
+            this.mainTextElements = getElementsFromText(canvasParams, textParams);
+
+            return this.mainTextElements;
+        }
+
+        return [];
     }
 
     private selectSimpleHighlight = () => {
-        this.setState({selectedBrush: HighlightBrusheTypes.SIMPLE});
+        this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE_CHAR });
     };
 
     private selectUnicodeHighlight = () => {
-        this.setState({selectedBrush: HighlightBrusheTypes.UNICODE});
+        this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE_WORD });
     };
 
-    private selectUnderscoreHighlight = () => {
-        this.setState({selectedBrush: HighlightBrusheTypes.UNDERSCORE});
+    private selectSubjectHighlight = () => {
+        this.setState({ selectedBrush: HighlightBrusheTypes.SUBJECT });
+    };
+
+    private selectPredicateHighlight = () => {
+        this.setState({ selectedBrush: HighlightBrusheTypes.PREDICATE });
     };
 }

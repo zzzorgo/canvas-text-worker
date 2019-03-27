@@ -1,13 +1,18 @@
 // export interface SimpleBrush
 export enum HighlightBrusheTypes {
     NONE = 'none',
-    SIMPLE = 'simple',
+    SIMPLE_CHAR = 'simple-char',
+    SIMPLE_WORD = 'simple-word',
     UNICODE = 'unicode',
     UNDERSCORE = 'underscore',
-    DOT = 'DOT'
+    DOT = 'dot',
+    PREFIX = 'prefix',
+    PREDICATE = 'predicate',
+    SUBJECT = 'subject'
 }
 
 export * from './simpleBrush';
 export * from './underscoreBrush';
 export * from './unicodeBrush';
 export * from './dotBrush';
+export * from './morphemeBrush';

@@ -1,4 +1,5 @@
-import { MouseEvent, VIEW_PORT_SCALE } from './constants';
+import { IMouseMessage } from 'src/message-delivery';
+import { VIEW_PORT_SCALE } from './constants';
 
 export interface IPoint {
     x: number,
@@ -8,6 +9,11 @@ export interface IPoint {
 export interface IRect {
     x: number;
     y: number;
+    width: number;
+    height: number;
+}
+
+export interface ISize {
     width: number;
     height: number;
 }
@@ -26,27 +32,28 @@ export abstract class CanvasElement {
 
     public setIsHit = (x: number, y: number) => {
         this.isHit = this.checkHit(x, y)
+        return this.isHit;
     }
 
     public getIsHit = () => this.isHit;
 
-    public onClick = (e: MouseEvent) => {
+    public onClick = (e: IMouseMessage) => {
         return;
     }
 
-    public onMouseDown = (e: MouseEvent) => {
+    public onMouseDown = (e: IMouseMessage) => {
         return;
     }
 
-    public onMouseUp = (e: MouseEvent) => {
+    public onMouseUp = (e: IMouseMessage) => {
         return;
     }
 
-    public onMouseMove = (e: MouseEvent) => {
+    public onMouseMove = (e: IMouseMessage) => {
         return;
     }
 
-    public onContextMenu = (e: MouseEvent) => {
+    public onContextMenu = (e: IMouseMessage) => {
         return;
     }
 
@@ -57,8 +64,8 @@ export abstract class CanvasElement {
         const viewPortY = y * VIEW_PORT_SCALE;
 
         const hitArea = this.rect;
-        const hitByX = viewPortX > hitArea.x && viewPortX < hitArea.x + hitArea.width;
-        const hitByY = viewPortY > hitArea.y && viewPortY < hitArea.y + hitArea.height;
+        const hitByX = viewPortX > hitArea.x && viewPortX < (hitArea.x + hitArea.width);
+        const hitByY = viewPortY > hitArea.y && viewPortY < (hitArea.y + hitArea.height);
         
         return hitByX && hitByY;
     }

@@ -1,42 +1,42 @@
 import * as _ from 'lodash';
 
 export enum HighlightingMode {
-    STAND_BY,
-    ADDING,
-    REMOVING
+    STAND_BY = 'stand-by',
+    ADDING = 'adding',
+    REMOVING = 'removing'
 }
 
 export class HighlightingState {
     public mode: HighlightingMode = HighlightingMode.STAND_BY;
     public start: number;
 
-    public getNewHighlightedChars = (highlightingEnd: number, highlightedChars: number[]) => {
-        let newHighlightedChars: number[] = highlightedChars;
-        const changedHighlightedChars = this.getChangedHighlightedChars(highlightingEnd);
+    public getNewHighlightedElements = (highlightingEnd: number, highlightedElements: number[]) => {
+        let newHighlightedElements: number[] = highlightedElements;
+        const changedHighlightedElements = this.getChangedHighlightedElements(highlightingEnd);
 
         if (this.mode === HighlightingMode.REMOVING) {
-            newHighlightedChars = _.without(highlightedChars, ...changedHighlightedChars);
+            newHighlightedElements = _.without(highlightedElements, ...changedHighlightedElements);
         } else if (this.mode === HighlightingMode.ADDING) {
-            newHighlightedChars = _.union(highlightedChars, changedHighlightedChars);
+            newHighlightedElements = _.union(highlightedElements, changedHighlightedElements);
         }
 
-        return newHighlightedChars;
+        return newHighlightedElements;
     };
 
-    private getChangedHighlightedChars = (end: number) => {
-        const changedHighlightedChars = [];
+    private getChangedHighlightedElements = (end: number) => {
+        const changedHighlightedElements = [];
         const { start } = this;
 
         if (start < end) {
             for (let index = start; index <= end; index++) {
-                changedHighlightedChars.push(index);
+                changedHighlightedElements.push(index);
             }
         } else {
             for (let index = start; index >= end; index--) {
-                changedHighlightedChars.push(index);
+                changedHighlightedElements.push(index);
             }
         }
 
-        return changedHighlightedChars;
+        return changedHighlightedElements;
     };
 }

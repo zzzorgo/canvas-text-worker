@@ -1,0 +1,11 @@
+.canvas-container-layer {
+    position: absolute;
+}
+
+.layer {
+    z-index: 1;
+}
+
+.layer-2 {
+    z-index: 2;
+}
