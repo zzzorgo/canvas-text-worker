@@ -16,24 +16,28 @@ export class SimpleSelectionMechanics {
     public stopHighlighting(state: ISimpleSelectionLayerState) {
         this.getElementMouseUpHandler(state, this.lastHoveredElement)();
     }
-
+    
     public handleMouseMessage = (props: ISimpleSelectionLayerProps, state: ISimpleSelectionLayerState, message: IMouseMessage) => {
         const { active } = props;
-
+        
         if (message.type === MessageType.mouseUp && active) {
             this.layerMouseUpHandler(state);
         }
     };
-
+    
     protected bindEventHandlers = (props: ISimpleSelectionLayerProps, state: ISimpleSelectionLayerState, elementToSelect: IIndexedCanvasElement) => {
         const { active } = props;
-
+        
         if (active) {
             elementToSelect.onMouseDown = this.getElementMouseDownHandler(state, elementToSelect);
             elementToSelect.onMouseMove = this.getElementMouseMoveHandler(state, elementToSelect);
             elementToSelect.onMouseUp = this.getElementMouseUpHandler(state, elementToSelect);
         }
     }
+
+    protected layerMouseUpHandler = (state: ISimpleSelectionLayerState) => {
+        this.stopHighlighting(state);
+    };
 
     private getElementMouseDownHandler = (state: ISimpleSelectionLayerState, element: IIndexedCanvasElement) => () => {
         const { selectedElements } = state;
@@ -60,9 +64,5 @@ export class SimpleSelectionMechanics {
         if (selectedElements !== newSelectedElements) {
             this.setState({ selectedElements: newSelectedElements });
         }
-    };
-
-    private layerMouseUpHandler = (state: ISimpleSelectionLayerState) => {
-        this.stopHighlighting(state);
     };
 }

@@ -14,6 +14,7 @@ import {
     SentenceSyntaxLayer,
     WordSimpleSelectionLayer
 } from './layers/simpleSelection';
+import { SentenceParts } from './layers/simpleSelection/wrappers/syntax/mechanics';
 
 export type MouseEventHandler = (message: IMessage) => void;
 
@@ -62,7 +63,8 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                 <div>
                     <button onClick={this.selectSimpleHighlight}>1</button>
                     <button onClick={this.selectUnicodeHighlight}>2</button>
-                    <button onClick={this.selectUnderscoreHighlight}>3</button>
+                    <button onClick={this.selectSubjectHighlight}>подлежащее</button>
+                    <button onClick={this.selectPredicateHighlight}>сказуемое</button>
                 </div>
                 <div
                     className="layers"
@@ -80,7 +82,13 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                             mainTextElements={mainTextElements}
                             subscription={this.messageDelivery} />
                         <SentenceSyntaxLayer
-                            active={selectedBrush === HighlightBrusheTypes.UNDERSCORE}
+                            sentencePart={SentenceParts.SUBJECT}
+                            active={selectedBrush === HighlightBrusheTypes.SUBJECT}
+                            mainTextElements={mainTextElements}
+                            subscription={this.messageDelivery} />
+                        <SentenceSyntaxLayer
+                            sentencePart={SentenceParts.PREDICATE}
+                            active={selectedBrush === HighlightBrusheTypes.PREDICATE}
                             mainTextElements={mainTextElements}
                             subscription={this.messageDelivery} />
                         <HoverLayer
@@ -161,7 +169,11 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
         this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE_WORD });
     };
 
-    private selectUnderscoreHighlight = () => {
-        this.setState({ selectedBrush: HighlightBrusheTypes.UNDERSCORE });
+    private selectSubjectHighlight = () => {
+        this.setState({ selectedBrush: HighlightBrusheTypes.SUBJECT });
+    };
+
+    private selectPredicateHighlight = () => {
+        this.setState({ selectedBrush: HighlightBrusheTypes.PREDICATE });
     };
 }

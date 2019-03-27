@@ -6,7 +6,9 @@ export enum HighlightBrusheTypes {
     UNICODE = 'unicode',
     UNDERSCORE = 'underscore',
     DOT = 'dot',
-    PREFIX = 'prefix'
+    PREFIX = 'prefix',
+    PREDICATE = 'predicate',
+    SUBJECT = 'subject'
 }
 
 export * from './simpleBrush';
