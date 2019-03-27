@@ -73,10 +73,12 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                     onClick={this.deliverMouseClickMessage}>
                         <CharSimpleSelectionLayer
                             active={selectedBrush === HighlightBrusheTypes.SIMPLE_CHAR}
-                            mainTextElements={mainTextElements} />
+                            mainTextElements={mainTextElements}
+                            subscription={this.messageDelivery} />
                         <WordSimpleSelectionLayer
                             active={selectedBrush === HighlightBrusheTypes.SIMPLE_WORD}
-                            mainTextElements={mainTextElements} />
+                            mainTextElements={mainTextElements}
+                            subscription={this.messageDelivery} />
                         <SentenceSyntaxLayer
                             active={selectedBrush === HighlightBrusheTypes.UNDERSCORE}
                             mainTextElements={mainTextElements}
@@ -106,8 +108,6 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
     };
 
     private deliverMouseClickMessage = (e: MouseEvent) => {
-        //tslint:disable
-        console.log(2);
         this.deliverMouseMessage(MessageType.mouseClick, e);
     };
 

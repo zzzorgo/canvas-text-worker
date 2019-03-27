@@ -1,3 +1,3 @@
-export { CharSimpleSelectionLayer } from './wrappers/char';
-export { WordSimpleSelectionLayer } from './wrappers/word';
-export { SentenceSyntaxLayer } from './wrappers/syntax';
+export { CharSimpleSelectionLayer } from './wrappers/char/layer';
+export { WordSimpleSelectionLayer } from './wrappers/word/layer';
+export { SentenceSyntaxLayer } from './wrappers/syntax/layer';
