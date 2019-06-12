@@ -6,12 +6,14 @@ import { ISimpleSelectionLayerProps, ISimpleSelectionLayerState } from '../../la
 import { WordSelectionMechanics } from './machanics';
 
 export class WordSimpleSelectionLayer extends React.Component<ISimpleSelectionLayerProps, ISimpleSelectionLayerState> {
-    private mechanics = new WordSelectionMechanics(this.setState.bind(this));
+    private mechanics = new WordSelectionMechanics(this.updateSelectedElements.bind(this));
 
     constructor(props: ISimpleSelectionLayerProps) {
         super(props);
 
-        const target = new MouseMessageTarget((message: IMouseMessage) => this.mechanics.handleMouseMessage(this.props, this.state, message));
+        const target = new MouseMessageTarget(
+            (message: IMouseMessage) => this.mechanics.handleMouseMessage(this.state.selectedElements, message, this.props.active)
+        );
         props.subscription.subscribe(target);
 
         this.state = {
@@ -20,10 +22,22 @@ export class WordSimpleSelectionLayer extends React.Component<ISimpleSelectionLa
     }
 
     public render() {        
+        const { selectedElements: selectedElementsFromState } = this.state;
+        const { active, mainTextElements, selectedElements: selectedElementsFromProps } = this.props;
+        const selectedElements = selectedElementsFromProps !== undefined ? selectedElementsFromProps : selectedElementsFromState;
+
         return (
             <CanvasContainer
-                objectModel={this.mechanics.prepareObjectModel(this.props, this.state)}
+                objectModel={this.mechanics.prepareObjectModel(mainTextElements, selectedElements, active)}
                 mix="canvas-container-layer" />
             );
+    }
+    
+    private updateSelectedElements(newSelectedElements: number[]) {
+        const { selectedElements } = this.state;
+
+        if (selectedElements !== newSelectedElements) {
+            this.setState({ selectedElements: newSelectedElements })
         }
+    };
 }

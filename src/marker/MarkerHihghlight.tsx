@@ -81,16 +81,18 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                             active={selectedBrush === HighlightBrusheTypes.SIMPLE_WORD}
                             mainTextElements={mainTextElements}
                             subscription={this.messageDelivery} />
-                        <SentenceSyntaxLayer
-                            sentencePart={SentenceParts.SUBJECT}
-                            active={selectedBrush === HighlightBrusheTypes.SUBJECT}
-                            mainTextElements={mainTextElements}
-                            subscription={this.messageDelivery} />
-                        <SentenceSyntaxLayer
-                            sentencePart={SentenceParts.PREDICATE}
-                            active={selectedBrush === HighlightBrusheTypes.PREDICATE}
-                            mainTextElements={mainTextElements}
-                            subscription={this.messageDelivery} />
+                        <CompositeLayer>
+                            <SentenceSyntaxLayer
+                                sentencePart={SentenceParts.SUBJECT}
+                                active={selectedBrush === HighlightBrusheTypes.SUBJECT}
+                                mainTextElements={mainTextElements}
+                                subscription={this.messageDelivery} />
+                            <SentenceSyntaxLayer
+                                sentencePart={SentenceParts.PREDICATE}
+                                active={selectedBrush === HighlightBrusheTypes.PREDICATE}
+                                mainTextElements={mainTextElements}
+                                subscription={this.messageDelivery} />
+                        </CompositeLayer>
                         <HoverLayer
                             subscription={this.messageDelivery}
                             mainTextElements={mainTextElements} />
@@ -176,4 +178,12 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
     private selectPredicateHighlight = () => {
         this.setState({ selectedBrush: HighlightBrusheTypes.PREDICATE });
     };
+}
+
+class CompositeLayer extends React.Component {
+    public render() {
+        const { children } = this.props;
+
+        return React.Children.map(children, child => child);
+    }
 }

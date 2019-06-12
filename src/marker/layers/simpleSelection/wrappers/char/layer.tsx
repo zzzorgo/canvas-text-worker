@@ -6,25 +6,46 @@ import { ISimpleSelectionLayerProps, ISimpleSelectionLayerState } from '../../la
 import { CharSelectionMechanics } from './mechanics';
 
 export class CharSimpleSelectionLayer extends React.Component<ISimpleSelectionLayerProps, ISimpleSelectionLayerState> {
-    private mechanics = new CharSelectionMechanics(this.setState.bind(this));
+    private mechanics: CharSelectionMechanics;
 
     constructor(props: ISimpleSelectionLayerProps) {
         super(props);
-
-        const target = new MouseMessageTarget((message: IMouseMessage) => this.mechanics.handleMouseMessage(this.props, this.state, message));
-        props.subscription.subscribe(target);
-
         this.state = {
             selectedElements: [],
         };
+
+        this.mechanics = new CharSelectionMechanics(this.updateSelectedElements);
+        const target = new MouseMessageTarget(
+            (message: IMouseMessage) => this.mechanics.handleMouseMessage(this.state.selectedElements, message, this.props.active)
+        );
+        props.subscription.subscribe(target);
     }
 
-    public render() {        
+    public render() {  
+        const { active, mainTextElements } = this.props;
+        const selectedElements = this.getSelectedElemetns();
+
         return (
             <CanvasContainer
-                objectModel={this.mechanics.prepareObjectModel(this.props, this.state)}
+                objectModel={this.mechanics.prepareObjectModel(mainTextElements, selectedElements, active)}
                 mix="canvas-container-layer" />
             );
+    }
+
+    // todo: переписать когда компонент contoled
+    private updateSelectedElements = (newSelectedElements: number[]) => {
+        const { selectedElements } = this.state;
+
+        if (selectedElements !== newSelectedElements) {
+            this.setState({ selectedElements: newSelectedElements })
         }
+    };
+
+    private getSelectedElemetns = () => {
+        const { selectedElements: selectedElementsFromState } = this.state;
+        const { selectedElements: selectedElementsFromProps } = this.props;
+
+        return selectedElementsFromProps !== undefined ? selectedElementsFromProps : selectedElementsFromState;
+    };
 }
 
