@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { combineReducers, createStore } from 'redux';
 import App from './App';
 import './index.css';
+import { highlightReducer } from './redux-like/reducer';
 import registerServiceWorker from './registerServiceWorker';
 
 // tslint:disable-next-line:no-empty-interface
@@ -12,6 +13,7 @@ export interface IState {
 }
 
 const reducer = combineReducers({
+    highlight: highlightReducer
 });
 
 // tslint:disable-next-line:no-string-literal
