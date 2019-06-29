@@ -18,7 +18,7 @@ import { SentenceParts } from './layers/simpleSelection/wrappers/syntax/mechanic
 import { prepareObjectModel } from '../redux-like/selectors';
 import { connect } from 'react-redux';
 import { Layer, Layer2 } from '../redux-like/Layer';
-import { wordClicked } from '../redux-like/actions';
+import { wordClicked, leaveWord, enterWord, startRangeSelection, stopRangeSelection, continueRangeSelection } from '../redux-like/actions';
 
 export class MarkerHighlight extends React.Component {
     mainTextElements;
@@ -58,28 +58,8 @@ export class MarkerHighlight extends React.Component {
                     onMouseDown={this.deliverMouseDownMessage}
                     onMouseUp={this.deliverMouseUpMessage}
                     onClick={this.deliverMouseClickMessage}>
-                        {/* <CharSimpleSelectionLayer
-                            active={selectedBrush === HighlightBrusheTypes.SIMPLE_CHAR}
-                            mainTextElements={mainTextElements}
-                            subscription={this.messageDelivery} />
-                        <WordSimpleSelectionLayer
-                            active={selectedBrush === HighlightBrusheTypes.SIMPLE_WORD}
-                            mainTextElements={mainTextElements}
-                            subscription={this.messageDelivery} />
-                        <CompositeLayer>
-                            <SentenceSyntaxLayer
-                                sentencePart={SentenceParts.SUBJECT}
-                                active={selectedBrush === HighlightBrusheTypes.SUBJECT}
-                                mainTextElements={mainTextElements}
-                                subscription={this.messageDelivery} />
-                            <SentenceSyntaxLayer
-                                sentencePart={SentenceParts.PREDICATE}
-                                active={selectedBrush === HighlightBrusheTypes.PREDICATE}
-                                mainTextElements={mainTextElements}
-                                subscription={this.messageDelivery} />
-                        </CompositeLayer> */}
-                        {/* <HoverLayer
-                            subscription={this.messageDelivery}
+                        {/* <Layer3
+                            mix="canvas-container-layer"
                             mainTextElements={mainTextElements} /> */}
                         <Layer2
                             mix="canvas-container-layer"
@@ -151,7 +131,11 @@ export class MarkerHighlight extends React.Component {
 
             this.mainTextElements.forEach(textElement => {
                 if (textElement instanceof TextCanvasElement) {
-                    textElement.onClick = () => this.props.wordClicked(textElement.index);
+                    // textElement.onClick = () => this.props.wordClicked(textElement.index);
+                    textElement.onMouseDown = () => this.props.startRangeSelection(textElement.index);
+                    textElement.onMouseEnter = () => this.props.continueRangeSelection(textElement.index);
+                    textElement.onMouseUp = () => this.props.stopRangeSelection(textElement.index);
+                    // textElement.onMouseLeave = () => this.props.wordLeaved(textElement.index);
                 }
             });
 
@@ -160,33 +144,15 @@ export class MarkerHighlight extends React.Component {
 
         return [];
     }
-
-    // private selectSimpleHighlight = () => {
-    //     this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE_CHAR });
-    // };
-
-    // private selectUnicodeHighlight = () => {
-    //     this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE_WORD });
-    // };
-
-    // private selectSubjectHighlight = () => {
-    //     this.setState({ selectedBrush: HighlightBrusheTypes.SUBJECT });
-    // };
-
-    // private selectPredicateHighlight = () => {
-    //     this.setState({ selectedBrush: HighlightBrusheTypes.PREDICATE });
-    // };
 }
 
-// class CompositeLayer extends React.Component {
-//     public render() {
-//         const { children } = this.props;
-
-//         return React.Children.map(children, child => child);
-//     }
-// }
 const mapDispatchToProps = (dispatch) => ({
-    wordClicked: wordIndex => dispatch(wordClicked(wordIndex))
+    wordClicked: wordIndex => dispatch(wordClicked(wordIndex)),
+    wordLeaved: wordIndex => dispatch(leaveWord(wordIndex)),
+    wordEntered: wordIndex => dispatch(enterWord(wordIndex)),
+    startRangeSelection: wordIndex => dispatch(startRangeSelection(wordIndex)),
+    stopRangeSelection: wordIndex => dispatch(stopRangeSelection(wordIndex)),
+    continueRangeSelection: wordIndex => dispatch(continueRangeSelection(wordIndex))
 });
 
 export const ConnectedMarkerHighlight = connect(null, mapDispatchToProps)(MarkerHighlight);

@@ -23,9 +23,7 @@ class LayerComp extends React.Component {
     }
 
     handle = (message) => {
-        if (message.type === MessageType.mouseClick) {
-            handleElementMouseEvents(message.type, this.props.objectModel, message);
-        }
+        handleElementMouseEvents(message.type, this.props.objectModel, message);
     };
 
     render() {
@@ -33,23 +31,14 @@ class LayerComp extends React.Component {
     }
 }
 
-const mapDispatchToProps2 = (dispatch) => ({
-    selectionClicked: (index) => dispatch(selectionClicked(index))
-});
-
-// const mapStateToProps2 = (state, {mainTextElements}) => {
-//     // const objectModel =  prepareObjectModel2(state, {mainTextElements});
-
-//     return 
-//         state;
-// };
-
-const mergeProps = (state, dispatchProps, ownProps) => {
+const mergeProps = (state, {dispatch}, ownProps) => {
     return {
-        ...dispatchProps,
         ...ownProps,
-        objectModel: prepareObjectModel2(state, {mainTextElements:ownProps.mainTextElements, clickHandler: dispatchProps.selectionClicked})
+        objectModel: prepareObjectModel2(state, {
+            clickHandler:  (index) => dispatch(selectionClicked(index)),
+            mainTextElements: ownProps.mainTextElements
+        })
     }
 };
 
-export const Layer2 = connect(state => state, mapDispatchToProps2, mergeProps)(LayerComp);
+export const Layer2 = connect(state => state, null, mergeProps)(LayerComp);
