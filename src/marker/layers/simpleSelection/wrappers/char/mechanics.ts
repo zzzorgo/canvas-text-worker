@@ -1,20 +1,16 @@
-import { CanvasElement } from 'src/canvas/CanvasElement';
+import { CanvasElement, IIndexedCanvasElement } from 'src/canvas/CanvasElement';
 import { CharCanvasElement } from 'src/canvas/elements/CharCanvasElement';
 import { simpleBrushPlugin } from 'src/canvas/plugins/brush';
-import { ISimpleSelectionLayerProps, ISimpleSelectionLayerState } from '../../layer';
 import { SimpleSelectionMechanics } from '../../mechanics';
 
 export class CharSelectionMechanics extends SimpleSelectionMechanics {
-    public prepareObjectModel = (props: ISimpleSelectionLayerProps, state: ISimpleSelectionLayerState) => {
-        const { mainTextElements } = props;
-        const { selectedElements } = state;
-
+    public prepareObjectModel = (mainTextElements: IIndexedCanvasElement[], selectedElements: number[], active: boolean) => {
         const elements: CanvasElement[] = [];
         
         mainTextElements.forEach(textElement => {
             textElement.children.forEach(charElement => {
                 if (charElement instanceof CharCanvasElement) {
-                    this.bindEventHandlers(props, state, charElement);
+                    this.bindEventHandlers(selectedElements, charElement, active);
                     
                     const simpleBrushElement = simpleBrushPlugin(charElement, selectedElements);
 

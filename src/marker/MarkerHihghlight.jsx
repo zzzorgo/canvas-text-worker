@@ -15,35 +15,20 @@ import {
     WordSimpleSelectionLayer
 } from './layers/simpleSelection';
 import { SentenceParts } from './layers/simpleSelection/wrappers/syntax/mechanics';
+import { connect } from 'react-redux';
+import { startRangeSelection, stopRangeSelection, continueRangeSelection, setCurrentBrush } from './redux-layers/actions';
+import { PredicateLayer, SubjectLayer } from './redux-layers/predicate';
+import { getShouldContinueRangeSelection } from './redux-layers/selectors';
 
-export type MouseEventHandler = (message: IMessage) => void;
+export class MarkerHighlight extends React.Component {
+    mainTextElements;
+    messageDelivery = new MessageDelivery();
 
-export type RenderPlugin = (element: CanvasElement) => void;
 
-export interface ISubscriberProps {
-    subscription: ISubscription    
-}
-
-interface IMarkerHighlightState {
-    highlightedWords: number[]
-    text: string,
-    canvasSize: ISize,
-    ctx?: CanvasRenderingContext2D,
-    selectedBrush: HighlightBrusheTypes
-}
-
-interface IMarkerHighlightProps {
-}
-
-export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMarkerHighlightState> {
-    private mainTextElements: TextCanvasElement[];
-    private messageDelivery: MessageDelivery = new MessageDelivery();
-
-    constructor(props: IMarkerHighlightProps) {
+    constructor(props) {
         super(props);
 
         this.state = {
-            highlightedWords: [],
             text: TEXT,
             canvasSize: {
                 width: 0,
@@ -53,8 +38,9 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
         }
     }
 
-    public render() {
+    render() {
         const { canvasSize, selectedBrush } = this.state;
+        const { setCurrentBrush } = this.props;
         const mainTextElements = this.prepareObjectModel();
         console.log('heavy render');
 
@@ -63,8 +49,8 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                 <div>
                     <button onClick={this.selectSimpleHighlight}>1</button>
                     <button onClick={this.selectUnicodeHighlight}>2</button>
-                    <button onClick={this.selectSubjectHighlight}>подлежащее</button>
-                    <button onClick={this.selectPredicateHighlight}>сказуемое</button>
+                    <button onClick={() => setCurrentBrush(HighlightBrusheTypes.SUBJECT)}>подлежащее</button>
+                    <button onClick={() => setCurrentBrush(HighlightBrusheTypes.PREDICATE)}>сказуемое</button>
                 </div>
                 <div
                     className="layers"
@@ -73,27 +59,10 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
                     onMouseDown={this.deliverMouseDownMessage}
                     onMouseUp={this.deliverMouseUpMessage}
                     onClick={this.deliverMouseClickMessage}>
-                        <CharSimpleSelectionLayer
-                            active={selectedBrush === HighlightBrusheTypes.SIMPLE_CHAR}
-                            mainTextElements={mainTextElements}
+                        <PredicateLayer
+                            mix="canvas-container-layer"
+                            mainTextElements={mainTextElements} 
                             subscription={this.messageDelivery} />
-                        <WordSimpleSelectionLayer
-                            active={selectedBrush === HighlightBrusheTypes.SIMPLE_WORD}
-                            mainTextElements={mainTextElements}
-                            subscription={this.messageDelivery} />
-                        <SentenceSyntaxLayer
-                            sentencePart={SentenceParts.SUBJECT}
-                            active={selectedBrush === HighlightBrusheTypes.SUBJECT}
-                            mainTextElements={mainTextElements}
-                            subscription={this.messageDelivery} />
-                        <SentenceSyntaxLayer
-                            sentencePart={SentenceParts.PREDICATE}
-                            active={selectedBrush === HighlightBrusheTypes.PREDICATE}
-                            mainTextElements={mainTextElements}
-                            subscription={this.messageDelivery} />
-                        <HoverLayer
-                            subscription={this.messageDelivery}
-                            mainTextElements={mainTextElements} />
                         <CanvasContainer
                             objectModel={mainTextElements}
                             mix="canvas-container-layer"
@@ -103,23 +72,23 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
         );
     }
 
-    private deliverMouseMoveMessage = (e: MouseEvent) => {
+    deliverMouseMoveMessage = (e) => {
         this.deliverMouseMessage(MessageType.mouseMove, e);
     };
 
-    private deliverMouseDownMessage = (e: MouseEvent) => {
+    deliverMouseDownMessage = (e) => {
         this.deliverMouseMessage(MessageType.mouseDown, e);
     };
 
-    private deliverMouseUpMessage = (e: MouseEvent) => {
+    deliverMouseUpMessage = (e) => {
         this.deliverMouseMessage(MessageType.mouseUp, e);
     };
 
-    private deliverMouseClickMessage = (e: MouseEvent) => {
+    deliverMouseClickMessage = (e) => {
         this.deliverMouseMessage(MessageType.mouseClick, e);
     };
 
-    private deliverMouseMessage = (type: MessageType, e: MouseEvent) => {
+    deliverMouseMessage = (type, e) => {
         const x = e.nativeEvent.offsetX;
         const y = e.nativeEvent.offsetY;
         const message = {
@@ -131,7 +100,7 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
         handleElementMouseEvents(message.type, this.mainTextElements, message);
     };
 
-    private setCanvasContext = (width: number, height: number, ctx?: CanvasRenderingContext2D) => {
+    setCanvasContext = (width, height, ctx) => {
         if (!ctx) {
             this.setState({
                 canvasSize: { width, height }
@@ -144,8 +113,9 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
         }
     }
 
-    private prepareObjectModel = () => {
+    prepareObjectModel = () => {
         const { text, canvasSize, ctx } = this.state;
+        const { shouldContinueSelection } = this.props;
 
         if (ctx) {
             const canvasParams = {
@@ -155,25 +125,34 @@ export class MarkerHighlight extends React.Component<IMarkerHighlightProps, IMar
             const textParams = getTextParams(text, 50, { x: 0, y: 0 });
             this.mainTextElements = getElementsFromText(canvasParams, textParams);
 
+            this.mainTextElements.forEach(textElement => {
+                if (textElement instanceof TextCanvasElement) {
+                    textElement.onMouseDown = () => this.props.startRangeSelection(textElement.index);
+                    textElement.onMouseEnter = () => {
+                        if (shouldContinueSelection) {
+                            this.props.continueRangeSelection(textElement.index);
+                        }
+                    };
+                    textElement.onMouseUp = () => this.props.stopRangeSelection(textElement.index);
+                }
+            });
+
             return this.mainTextElements;
         }
 
         return [];
     }
-
-    private selectSimpleHighlight = () => {
-        this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE_CHAR });
-    };
-
-    private selectUnicodeHighlight = () => {
-        this.setState({ selectedBrush: HighlightBrusheTypes.SIMPLE_WORD });
-    };
-
-    private selectSubjectHighlight = () => {
-        this.setState({ selectedBrush: HighlightBrusheTypes.SUBJECT });
-    };
-
-    private selectPredicateHighlight = () => {
-        this.setState({ selectedBrush: HighlightBrusheTypes.PREDICATE });
-    };
 }
+
+const mapStateToProps = (state) => ({
+    shouldContinueSelection: getShouldContinueRangeSelection(state)
+});
+
+const mapDispatchToProps = (dispatch) => ({
+    startRangeSelection: wordIndex => dispatch(startRangeSelection(wordIndex)),
+    stopRangeSelection: wordIndex => dispatch(stopRangeSelection(wordIndex)),
+    continueRangeSelection: wordIndex => dispatch(continueRangeSelection(wordIndex)),
+    setCurrentBrush: brushType => dispatch(setCurrentBrush(brushType))
+});
+
+export const ConnectedMarkerHighlight = connect(mapStateToProps, mapDispatchToProps)(MarkerHighlight);

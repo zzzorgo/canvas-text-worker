@@ -1,4 +1,4 @@
-import { IMouseMessage } from 'src/message-delivery';
+import { IMouseMessage, MessageType } from 'src/message-delivery';
 import { VIEW_PORT_SCALE } from './constants';
 
 export interface IPoint {
@@ -31,8 +31,17 @@ export abstract class CanvasElement {
     protected isHit: boolean;
 
     public setIsHit = (x: number, y: number) => {
-        this.isHit = this.checkHit(x, y)
-        return this.isHit;
+        const prevIsHit = this.isHit;
+        const nextIsHit = this.checkHit(x, y);
+
+        if (!prevIsHit && nextIsHit) {
+            this.onMouseEnter({type: MessageType.mouseEnter, pointerPosition: {x, y}});
+        } else if (prevIsHit && !nextIsHit) {
+            this.onMouseLeave({type: MessageType.mouseLeave, pointerPosition: {x, y}});
+        }
+
+        this.isHit = nextIsHit;
+        return nextIsHit;
     }
 
     public getIsHit = () => this.isHit;
@@ -50,6 +59,14 @@ export abstract class CanvasElement {
     }
 
     public onMouseMove = (e: IMouseMessage) => {
+        return;
+    }
+
+    public onMouseEnter = (e: IMouseMessage) => {
+        return;
+    }
+
+    public onMouseLeave = (e: IMouseMessage) => {
         return;
     }
 

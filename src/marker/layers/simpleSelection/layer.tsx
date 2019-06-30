@@ -7,7 +7,8 @@ import { ISubscription } from 'src/message-delivery';
 export interface ISimpleSelectionLayerProps {
     mainTextElements: IIndexedCanvasElement[],
     active: boolean,
-    subscription: ISubscription
+    subscription: ISubscription,
+    selectedElements?: number[]
 }
 
 export interface ISimpleSelectionLayerState {

@@ -1,16 +1,30 @@
 import * as _ from 'lodash';
+import { HighlightingMode } from '.';
 
-export enum HighlightingMode {
-    STAND_BY = 'stand-by',
-    ADDING = 'adding',
-    REMOVING = 'removing'
-}
-
-export class HighlightingState {
+export class OneOfPolitic {
     public mode: HighlightingMode = HighlightingMode.STAND_BY;
     public start: number;
 
-    public getNewHighlightedElements = (highlightingEnd: number, highlightedElements: number[]) => {
+    public startHighlightRequest = (index: number, selectedElements: number[]) => {
+        const alreadyHighlighted = selectedElements.includes(index);
+        this.start = index;
+        this.mode = alreadyHighlighted ? HighlightingMode.REMOVING : HighlightingMode.ADDING;
+
+        return selectedElements;
+    };
+
+    public stopHighlightRequest = (index: number, selectedElements: number[]) => {
+        const newHighlightedElements = this.updateHighlight(index, selectedElements);
+        this.mode = HighlightingMode.STAND_BY;
+
+        return newHighlightedElements;
+    };
+
+    public updateHighlightRequest = (highlightingEnd: number, highlightedElements: number[]) => {
+        return this.updateHighlight(highlightingEnd, highlightedElements);
+    };
+
+    private updateHighlight = (highlightingEnd: number, highlightedElements: number[]) => {
         let newHighlightedElements: number[] = highlightedElements;
         const changedHighlightedElements = this.getChangedHighlightedElements(highlightingEnd);
 

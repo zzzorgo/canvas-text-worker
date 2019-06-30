@@ -1,68 +1,59 @@
 import { CanvasElement, IIndexedCanvasElement } from 'src/canvas/CanvasElement';
-import { HighlightingMode, HighlightingState } from 'src/marker/HighlightingState';
+import { AllPolitic } from 'src/marker/politics/allPolitic';
 import { IMouseMessage, MessageType } from 'src/message-delivery';
-import { ISimpleSelectionLayerProps, ISimpleSelectionLayerState } from './layer';
+
+export type UpdateSelectedElements = (newSelectedElements: number[]) => void;
 
 export class SimpleSelectionMechanics {
-    public prepareObjectModel: (props: ISimpleSelectionLayerProps, state: ISimpleSelectionLayerState) => CanvasElement[];
-    protected setState: any;
-    protected hilightingState = new HighlightingState();
+    public prepareObjectModel: (mainTextElements: IIndexedCanvasElement[], selectedElements: number[], active: boolean) => CanvasElement[];
+    protected updateSelectedElements: UpdateSelectedElements;
+    protected hilightingState = new AllPolitic();
     private lastHoveredElement: IIndexedCanvasElement;
 
-    constructor(bindedSetState: any) {
-        this.setState = bindedSetState;
+    constructor(updateSelectedElements: UpdateSelectedElements) {
+        this.updateSelectedElements = updateSelectedElements;
     }
 
-    public stopHighlighting(state: ISimpleSelectionLayerState) {
-        this.getElementMouseUpHandler(state, this.lastHoveredElement)();
-    }
-    
-    public handleMouseMessage = (props: ISimpleSelectionLayerProps, state: ISimpleSelectionLayerState, message: IMouseMessage) => {
-        const { active } = props;
-        
+    public handleMouseMessage = (selectedElements: number[], message: IMouseMessage, active: boolean) => {        
         if (message.type === MessageType.mouseUp && active) {
-            this.layerMouseUpHandler(state);
+            this.layerMouseUpHandler(selectedElements);
         }
     };
     
-    protected bindEventHandlers = (props: ISimpleSelectionLayerProps, state: ISimpleSelectionLayerState, elementToSelect: IIndexedCanvasElement) => {
-        const { active } = props;
-        
+    protected bindEventHandlers = (selectedElements: number[], elementToSelect: IIndexedCanvasElement, active: boolean) => {        
         if (active) {
-            elementToSelect.onMouseDown = this.getElementMouseDownHandler(state, elementToSelect);
-            elementToSelect.onMouseMove = this.getElementMouseMoveHandler(state, elementToSelect);
-            elementToSelect.onMouseUp = this.getElementMouseUpHandler(state, elementToSelect);
+            elementToSelect.onMouseDown = this.getElementMouseDownHandler(selectedElements, elementToSelect);
+            elementToSelect.onMouseMove = this.getElementMouseMoveHandler(selectedElements, elementToSelect);
+            elementToSelect.onMouseUp = this.getElementMouseUpHandler(selectedElements, elementToSelect);
         }
     }
 
-    protected layerMouseUpHandler = (state: ISimpleSelectionLayerState) => {
-        this.stopHighlighting(state);
+    protected layerMouseUpHandler = (selectedElements: number[]) => {
+        this.stopHighlighting(selectedElements);
     };
 
-    private getElementMouseDownHandler = (state: ISimpleSelectionLayerState, element: IIndexedCanvasElement) => () => {
-        const { selectedElements } = state;
-        const alreadyHighlighted = selectedElements.includes(element.index);
-        
-        this.hilightingState.start = element.index;
-        this.hilightingState.mode = alreadyHighlighted ? HighlightingMode.REMOVING : HighlightingMode.ADDING;
+    private stopHighlighting(selectedElements: number[]) {
+        this.getElementMouseUpHandler(selectedElements, this.lastHoveredElement)();
+    }
+
+    private getElementMouseDownHandler = (selectedElements: number[], element: IIndexedCanvasElement) => () => {
+        this.hilightingState.startHighlightRequest(element.index, selectedElements);
     }
     
-    private getElementMouseMoveHandler = (state: ISimpleSelectionLayerState, element: IIndexedCanvasElement) => () => {       
-        this.updateHighlightedElements(state, element);
+    private getElementMouseMoveHandler = (selectedElements: number[], element: IIndexedCanvasElement) => () => {       
+        const newSelectedElements = this.hilightingState.updateHighlightRequest(element.index, selectedElements);
+        this.updateHighlightedElements(selectedElements, newSelectedElements);
         this.lastHoveredElement = element;
     };
     
-    private getElementMouseUpHandler = (state: ISimpleSelectionLayerState, element: IIndexedCanvasElement) => () => {
-        this.updateHighlightedElements(state, element);
-        this.hilightingState.mode = HighlightingMode.STAND_BY;
+    private getElementMouseUpHandler = (selectedElements: number[], element: IIndexedCanvasElement) => () => {
+        const newSelectedElements = this.hilightingState.stopHighlightRequest(element.index, selectedElements);
+        this.updateHighlightedElements(selectedElements, newSelectedElements);
     }
 
-    private updateHighlightedElements = (state: ISimpleSelectionLayerState, element: IIndexedCanvasElement) => {
-        const { selectedElements } = state;
-        const newSelectedElements = this.hilightingState.getNewHighlightedElements(element.index, selectedElements);
-
+    private updateHighlightedElements = (selectedElements: number[], newSelectedElements: number[]) => {
         if (selectedElements !== newSelectedElements) {
-            this.setState({ selectedElements: newSelectedElements });
+            this.updateSelectedElements(newSelectedElements);
         }
     };
 }
