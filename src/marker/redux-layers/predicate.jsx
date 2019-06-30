@@ -34,15 +34,4 @@ const mergePropsPredicate = (state, {dispatch}, ownProps) => {
     }
 };
 
-const mergePropsSubject = (state, {dispatch}, ownProps) => {
-    return {
-        ...ownProps,
-        objectModel: getSubjectObjectModel(state, {
-            clickHandler:  () => {},
-            mainTextElements: ownProps.mainTextElements
-        })
-    }
-};
-
 export const PredicateLayer = connect(state => state, null, mergePropsPredicate)(Layer);
-export const SubjectLayer = connect(state => state, null, mergePropsSubject)(Layer);

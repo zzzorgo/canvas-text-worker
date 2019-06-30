@@ -59,14 +59,7 @@ export class MarkerHighlight extends React.Component {
                     onMouseDown={this.deliverMouseDownMessage}
                     onMouseUp={this.deliverMouseUpMessage}
                     onClick={this.deliverMouseClickMessage}>
-                        {/* <Layer3
-                            mix="canvas-container-layer"
-                            mainTextElements={mainTextElements} /> */}
                         <PredicateLayer
-                            mix="canvas-container-layer"
-                            mainTextElements={mainTextElements} 
-                            subscription={this.messageDelivery} />
-                        <SubjectLayer
                             mix="canvas-container-layer"
                             mainTextElements={mainTextElements} 
                             subscription={this.messageDelivery} />

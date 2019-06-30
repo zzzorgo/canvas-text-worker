@@ -7,8 +7,6 @@ import { HighlightBrusheTypes } from 'src/canvas/plugins/brush';
 const NOT_SET_START_INDEX = -1;
 
 const intialState = {
-    predicateWords: [1, 2, 3],
-    subjectWords: [4,5,6],
     syntaxWords: {},
     currentBrush: HighlightBrusheTypes.NONE,
     startIndex: NOT_SET_START_INDEX,
@@ -20,7 +18,7 @@ export const highlightReducer = (state = intialState, action = {}) => {
         case actionTypes.SELECTION_CLICKED: {
             const newState  = {...state};
 
-            newState.predicateWords = state.predicateWords.filter(index => index !== action.wordIndex);
+            // newState.predicateWords = state.predicateWords.filter(index => index !== action.wordIndex);
             return newState;
         }
 
