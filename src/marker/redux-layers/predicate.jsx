@@ -5,7 +5,7 @@ import { CanvasContainer } from 'src/canvas/CanvasContainer';
 import { MouseMessageTarget } from 'src/message-delivery/target';
 import { selectionClicked } from './actions';
 import { handleElementMouseEvents } from 'src/canvas/utils/objectModel';
-import { prepareObjectModel, getPredicateObjectModel, getSubjectObjectModel } from './selectors';
+import { prepareObjectModel, getPredicateObjectModel, getSubjectObjectModel, getCurrentBrush, prepareSyntaxObjectModel } from './selectors';
 
 class Layer extends React.Component {
     constructor(props) {
@@ -27,7 +27,7 @@ class Layer extends React.Component {
 const mergePropsPredicate = (state, {dispatch}, ownProps) => {
     return {
         ...ownProps,
-        objectModel: getPredicateObjectModel(state, {
+        objectModel: prepareSyntaxObjectModel(state, {
             clickHandler:  (index) => dispatch(selectionClicked(index)),
             mainTextElements: ownProps.mainTextElements
         })

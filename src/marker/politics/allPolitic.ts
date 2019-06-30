@@ -1,4 +1,5 @@
 import * as _ from 'lodash';
+import { HighlightBrusheTypes } from 'src/canvas/plugins/brush';
 import { HighlightingMode } from '.';
 
 export class AllPolitic {
@@ -55,6 +56,10 @@ export class AllPolitic {
     };
 }
 
+interface IHighlightItem {
+    brushType: HighlightBrusheTypes,
+    index: number
+}
 // tslint:disable-next-line:max-classes-per-file
 export class HighligtingHelper {
     public mode: HighlightingMode = HighlightingMode.STAND_BY;
@@ -67,28 +72,29 @@ export class HighligtingHelper {
         return mode;
     };
 
-    public stopHighlightRequest = (index: number, selectedElements: number[], mode: HighlightingMode, start: number) => {
-        const newHighlightedElements = this.updateHighlight(index, selectedElements, mode, start);
-        const newMode = HighlightingMode.STAND_BY;
+    public stopHighlightRequest = (index: number, selectedElements: Map<number, IHighlightItem>, mode: HighlightingMode, start: number, currentBrush: HighlightBrusheTypes) => {
+        const newHighlightedElements = this.updateHighlight(index, selectedElements, mode, start, currentBrush);
 
-        return {newHighlightedElements, mode: newMode};
+        return {newHighlightedElements};
     };
 
-    public updateHighlightRequest = (highlightingEnd: number, highlightedElements: number[], mode: HighlightingMode, start: number) => {
-        return this.updateHighlight(highlightingEnd, highlightedElements, mode, start);
+    public updateHighlightRequest = (highlightingEnd: number, highlightedElements:  Map<number, IHighlightItem>, mode: HighlightingMode, start: number, currentBrush: HighlightBrusheTypes) => {
+        return this.updateHighlight(highlightingEnd, highlightedElements, mode, start, currentBrush);
     };
 
-    private updateHighlight = (highlightingEnd: number, highlightedElements: number[], mode: HighlightingMode, start: number) => {
-        let newHighlightedElements: number[] = [...highlightedElements];
-        const changedHighlightedElements = this.getChangedHighlightedElements(highlightingEnd, start);
+    private updateHighlight = (highlightingEnd: number, highlightedElements: Map<number, IHighlightItem>, mode: HighlightingMode, start: number, currentBrush: HighlightBrusheTypes) => {
+        const newHighlightedElements = { ...highlightedElements };
+        const changedIndexes = this.getChangedHighlightedElements(start, highlightingEnd);
 
-        if (mode === HighlightingMode.REMOVING) {
-            newHighlightedElements = _.without(highlightedElements, ...changedHighlightedElements);
-        } else if (mode === HighlightingMode.ADDING) {
-            newHighlightedElements = _.union(highlightedElements, changedHighlightedElements);
+        if (mode === HighlightingMode.ADDING) {
+            for (const index of changedIndexes) {
+                newHighlightedElements[index] = {index, brushType: currentBrush};
+            }
+        } else if (mode === HighlightingMode.REMOVING) {
+            for (const index of changedIndexes) {
+                delete newHighlightedElements[index];
+            }
         }
-
-        return newHighlightedElements;
     };
 
     private getChangedHighlightedElements = (end: number, start: number) => {

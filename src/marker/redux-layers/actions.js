@@ -1,22 +1,27 @@
-import { WORD_CLICKED, SELECTION_CLICKED, LEAVE_WORD, ENTER_WORD, START_RANGE_SELECTION, STOP_RANGE_SELECTION, CONTINUE_RANGE_SELECTION } from './actionTypes';
+// tslint:disable
+import * as constants from './actionTypes';
 
 export const selectionClicked = (wordIndex) => ({
-    type: SELECTION_CLICKED,
+    type: constants.SELECTION_CLICKED,
     wordIndex
 });
 
 export const startRangeSelection = (wordIndex) => ({
-    type: START_RANGE_SELECTION,
+    type: constants.START_RANGE_SELECTION,
     wordIndex
 });
 
 export const stopRangeSelection = (wordIndex) => ({
-    type: STOP_RANGE_SELECTION,
+    type: constants.STOP_RANGE_SELECTION,
     wordIndex
 });
 
 export const continueRangeSelection = (wordIndex) => ({
-    type: CONTINUE_RANGE_SELECTION,
+    type: constants.CONTINUE_RANGE_SELECTION,
     wordIndex
 });
 
+export const setCurrentBrush = (brushType) => ({
+    type: constants.SET_CURRENT_BRUSH,
+    brushType
+});

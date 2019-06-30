@@ -16,8 +16,9 @@ import {
 } from './layers/simpleSelection';
 import { SentenceParts } from './layers/simpleSelection/wrappers/syntax/mechanics';
 import { connect } from 'react-redux';
-import { startRangeSelection, stopRangeSelection, continueRangeSelection } from './redux-layers/actions';
+import { startRangeSelection, stopRangeSelection, continueRangeSelection, setCurrentBrush } from './redux-layers/actions';
 import { PredicateLayer, SubjectLayer } from './redux-layers/predicate';
+import { getShouldContinueRangeSelection } from './redux-layers/selectors';
 
 export class MarkerHighlight extends React.Component {
     mainTextElements;
@@ -39,6 +40,7 @@ export class MarkerHighlight extends React.Component {
 
     render() {
         const { canvasSize, selectedBrush } = this.state;
+        const { setCurrentBrush } = this.props;
         const mainTextElements = this.prepareObjectModel();
         console.log('heavy render');
 
@@ -47,8 +49,8 @@ export class MarkerHighlight extends React.Component {
                 <div>
                     <button onClick={this.selectSimpleHighlight}>1</button>
                     <button onClick={this.selectUnicodeHighlight}>2</button>
-                    <button onClick={this.selectSubjectHighlight}>подлежащее</button>
-                    <button onClick={this.selectPredicateHighlight}>сказуемое</button>
+                    <button onClick={() => setCurrentBrush(HighlightBrusheTypes.SUBJECT)}>подлежащее</button>
+                    <button onClick={() => setCurrentBrush(HighlightBrusheTypes.PREDICATE)}>сказуемое</button>
                 </div>
                 <div
                     className="layers"
@@ -120,6 +122,7 @@ export class MarkerHighlight extends React.Component {
 
     prepareObjectModel = () => {
         const { text, canvasSize, ctx } = this.state;
+        const { shouldContinueSelection } = this.props;
 
         if (ctx) {
             const canvasParams = {
@@ -132,7 +135,11 @@ export class MarkerHighlight extends React.Component {
             this.mainTextElements.forEach(textElement => {
                 if (textElement instanceof TextCanvasElement) {
                     textElement.onMouseDown = () => this.props.startRangeSelection(textElement.index);
-                    textElement.onMouseEnter = () => this.props.continueRangeSelection(textElement.index);
+                    textElement.onMouseEnter = () => {
+                        if (shouldContinueSelection) {
+                            this.props.continueRangeSelection(textElement.index);
+                        }
+                    };
                     textElement.onMouseUp = () => this.props.stopRangeSelection(textElement.index);
                 }
             });
@@ -144,10 +151,15 @@ export class MarkerHighlight extends React.Component {
     }
 }
 
+const mapStateToProps = (state) => ({
+    shouldContinueSelection: getShouldContinueRangeSelection(state)
+});
+
 const mapDispatchToProps = (dispatch) => ({
     startRangeSelection: wordIndex => dispatch(startRangeSelection(wordIndex)),
     stopRangeSelection: wordIndex => dispatch(stopRangeSelection(wordIndex)),
-    continueRangeSelection: wordIndex => dispatch(continueRangeSelection(wordIndex))
+    continueRangeSelection: wordIndex => dispatch(continueRangeSelection(wordIndex)),
+    setCurrentBrush: brushType => dispatch(setCurrentBrush(brushType))
 });
 
-export const ConnectedMarkerHighlight = connect(null, mapDispatchToProps)(MarkerHighlight);
+export const ConnectedMarkerHighlight = connect(mapStateToProps, mapDispatchToProps)(MarkerHighlight);
