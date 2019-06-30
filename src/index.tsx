@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { combineReducers, createStore } from 'redux';
 import App from './App';
 import './index.css';
-import { highlightReducer } from './redux-like/reducer';
+import { highlightReducer } from './marker/redux-layers/reducer';
 import registerServiceWorker from './registerServiceWorker';
 
 // tslint:disable-next-line:no-empty-interface

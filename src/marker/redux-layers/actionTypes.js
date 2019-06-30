@@ -1,6 +1,3 @@
-export const WORD_CLICKED = 'SELECT_WORD';
-export const ENTER_WORD = 'ENTER_WORD';
-export const LEAVE_WORD = 'LEAVE_WORD';
 export const SELECTION_CLICKED = 'SELECTION_CLICKED';
 
 export const START_RANGE_SELECTION = 'START_RANGE_SELECTION';

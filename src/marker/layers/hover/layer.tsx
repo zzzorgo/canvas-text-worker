@@ -4,10 +4,12 @@ import { CanvasElement, IPoint } from 'src/canvas/CanvasElement';
 import { CharCanvasElement } from 'src/canvas/elements/CharCanvasElement';
 import { TextCanvasElement } from 'src/canvas/elements/TextCanvasElement';
 import { hoverPlugin } from 'src/canvas/plugins/hover';
-import { ISubscriberProps } from 'src/marker/MarkerHihghlight';
-import { IMouseMessage } from 'src/message-delivery';
+import { IMouseMessage, ISubscription } from 'src/message-delivery';
 import { MouseMessageTarget } from '../../../message-delivery/target';
 
+export interface ISubscriberProps {
+    subscription: ISubscription    
+}
 interface IHoverLayerProps extends ISubscriberProps {
     mainTextElements: TextCanvasElement[]
 }

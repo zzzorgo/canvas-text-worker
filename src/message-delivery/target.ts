@@ -1,5 +1,6 @@
-import { MouseEventHandler } from 'src/marker/MarkerHihghlight';
 import { IDeliveryTarget, IMessage } from 'src/message-delivery';
+
+export type MouseEventHandler = (message: IMessage) => void;
 
 export class MouseMessageTarget implements IDeliveryTarget {
     private handler: MouseEventHandler;

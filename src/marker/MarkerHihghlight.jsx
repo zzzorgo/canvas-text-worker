@@ -15,10 +15,9 @@ import {
     WordSimpleSelectionLayer
 } from './layers/simpleSelection';
 import { SentenceParts } from './layers/simpleSelection/wrappers/syntax/mechanics';
-import { prepareObjectModel } from '../redux-like/selectors';
 import { connect } from 'react-redux';
-import { Layer, Layer2 } from '../redux-like/Layer';
-import { wordClicked, leaveWord, enterWord, startRangeSelection, stopRangeSelection, continueRangeSelection } from '../redux-like/actions';
+import { startRangeSelection, stopRangeSelection, continueRangeSelection } from './redux-layers/actions';
+import { PredicateLayer, SubjectLayer } from './redux-layers/predicate';
 
 export class MarkerHighlight extends React.Component {
     mainTextElements;
@@ -61,13 +60,14 @@ export class MarkerHighlight extends React.Component {
                         {/* <Layer3
                             mix="canvas-container-layer"
                             mainTextElements={mainTextElements} /> */}
-                        <Layer2
+                        <PredicateLayer
                             mix="canvas-container-layer"
                             mainTextElements={mainTextElements} 
                             subscription={this.messageDelivery} />
-                        <Layer
+                        <SubjectLayer
                             mix="canvas-container-layer"
-                            mainTextElements={mainTextElements} />
+                            mainTextElements={mainTextElements} 
+                            subscription={this.messageDelivery} />
                         <CanvasContainer
                             objectModel={mainTextElements}
                             mix="canvas-container-layer"
@@ -131,11 +131,9 @@ export class MarkerHighlight extends React.Component {
 
             this.mainTextElements.forEach(textElement => {
                 if (textElement instanceof TextCanvasElement) {
-                    // textElement.onClick = () => this.props.wordClicked(textElement.index);
                     textElement.onMouseDown = () => this.props.startRangeSelection(textElement.index);
                     textElement.onMouseEnter = () => this.props.continueRangeSelection(textElement.index);
                     textElement.onMouseUp = () => this.props.stopRangeSelection(textElement.index);
-                    // textElement.onMouseLeave = () => this.props.wordLeaved(textElement.index);
                 }
             });
 
@@ -147,9 +145,6 @@ export class MarkerHighlight extends React.Component {
 }
 
 const mapDispatchToProps = (dispatch) => ({
-    wordClicked: wordIndex => dispatch(wordClicked(wordIndex)),
-    wordLeaved: wordIndex => dispatch(leaveWord(wordIndex)),
-    wordEntered: wordIndex => dispatch(enterWord(wordIndex)),
     startRangeSelection: wordIndex => dispatch(startRangeSelection(wordIndex)),
     stopRangeSelection: wordIndex => dispatch(stopRangeSelection(wordIndex)),
     continueRangeSelection: wordIndex => dispatch(continueRangeSelection(wordIndex))
