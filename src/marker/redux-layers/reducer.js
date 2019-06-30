@@ -15,8 +15,6 @@ const intialState = {
     highlightingMode: HighlightingMode.STAND_BY
 };
 
-const helper = new HighligtingHelper();
-
 export const highlightReducer = (state = intialState, action = {}) => {
     switch (action.type) {
         case actionTypes.SELECTION_CLICKED: {
@@ -41,6 +39,7 @@ export const highlightReducer = (state = intialState, action = {}) => {
         case actionTypes.START_RANGE_SELECTION: {
             
             // newState.startIndex = wordIndex;
+            console.log(state);
             if (state.currentBrush !== HighlightBrusheTypes.NONE) {
                 const newState = {...state};
                 const {wordIndex} = action;
@@ -64,49 +63,22 @@ export const highlightReducer = (state = intialState, action = {}) => {
         case actionTypes.CONTINUE_RANGE_SELECTION: {
             const newState = {...state};
             const {wordIndex: end} = action;
-            const {startIndex: start} = state;
+            const {startIndex: start, syntaxWords, highlightingMode, currentBrush} = state;
 
-            const changedIndexes = helper.getChangedHighlightedElements(start, end);
-
-            newState.syntaxWords = {...state.syntaxWords};
-
-            if (state.highlightingMode === HighlightingMode.ADDING) {
-                for (const index of changedIndexes) {
-                    newState.syntaxWords[index] = {index, brushType: state.currentBrush};
-                }
-            } else if (state.highlightingMode === HighlightingMode.REMOVING) {
-                for (const index of changedIndexes) {
-                    delete newState.syntaxWords[index];
-                }
-            }
+            newState.syntaxWords = updateHighlightRequest(start, end, highlightingMode, syntaxWords, currentBrush);
 
             return newState;
         }
 
         case actionTypes.STOP_RANGE_SELECTION: {
             const newState = {...state};
-            const {wordIndex} = action;
-            
-            const end = wordIndex;
-            const start = state.startIndex;
+            const {wordIndex: end} = action;            
+            const {startIndex: start, syntaxWords, highlightingMode, currentBrush} = state;
 
-            const changedIndexes = helper.getChangedHighlightedElements(start, end);
-
-            newState.syntaxWords = {...state.syntaxWords};
-
-            if (state.highlightingMode === HighlightingMode.ADDING) {
-                for (const index of changedIndexes) {
-                    newState.syntaxWords[index] = {index, brushType: state.currentBrush};
-                }
-            } else if (state.highlightingMode === HighlightingMode.REMOVING) {
-                for (const index of changedIndexes) {
-                    delete newState.syntaxWords[index];
-                }
-            }
+            newState.syntaxWords = updateHighlightRequest(start, end, highlightingMode, syntaxWords, currentBrush);
 
             newState.highlightingMode = HighlightingMode.STAND_BY;
             newState.startIndex = NOT_SET_START_INDEX;
-            // newState.predicateWords = newHighlightedElements;
 
             return newState;
         }
@@ -121,4 +93,38 @@ export const highlightReducer = (state = intialState, action = {}) => {
         default:
             return state;
     }
+};
+
+const getChangedHighlightedElements = (end, start) => {
+    const changedHighlightedElements = [];
+
+    if (start < end) {
+        for (let index = start; index <= end; index++) {
+            changedHighlightedElements.push(index);
+        }
+    } else {
+        for (let index = start; index >= end; index--) {
+            changedHighlightedElements.push(index);
+        }
+    }
+
+    return changedHighlightedElements;
+};
+
+const updateHighlightRequest = (start, end, highlightingMode, highlightElements, currentBrush) => {
+    const changedIndexes = getChangedHighlightedElements(start, end);
+
+    const newHighlightElements = { ...highlightElements };
+
+    if (highlightingMode === HighlightingMode.ADDING) {
+        for (const index of changedIndexes) {
+            newHighlightElements[index] = {index, brushType: currentBrush};
+        }
+    } else if (highlightingMode === HighlightingMode.REMOVING) {
+        for (const index of changedIndexes) {
+            delete newHighlightElements[index];
+        }
+    }
+
+    return newHighlightElements;
 };
