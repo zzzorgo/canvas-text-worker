@@ -16,12 +16,21 @@ export const stopRangeSelection = (wordIndex) => ({
     wordIndex
 });
 
-export const continueRangeSelection = (wordIndex) => ({
+export const continueRangeSelection = (element) => ({
     type: constants.CONTINUE_RANGE_SELECTION,
-    wordIndex
+    element
 });
 
 export const setCurrentBrush = (brushType) => ({
     type: constants.SET_CURRENT_BRUSH,
     brushType
+});
+
+export const removeHoveredElement = () => ({
+    type: constants.REMOVE_HOVERED_ELEMENT
+});
+
+export const setHoveredElement = (element) => ({
+    type: constants.SET_HOVERED_ELEMENT,
+    element
 });
