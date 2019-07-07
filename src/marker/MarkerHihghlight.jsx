@@ -5,7 +5,7 @@ import { CanvasContainer } from '../canvas/CanvasContainer';
 import { CanvasElement, ISize } from '../canvas/CanvasElement';
 import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../canvas/constants';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
-import { getElementsFromText, getTextParams, handleElementMouseEvents, CanvasObjectModel } from '../canvas/utils/objectModel';
+import { getTextParams, handleElementMouseEvents, CanvasObjectModel } from '../canvas/utils/objectModel';
 import './MarkerHihghlight.css';
 import { HighlightBrusheTypes } from 'src/canvas/plugins/brush';
 
@@ -70,6 +70,7 @@ export class MarkerHighlight extends React.Component {
                             mix="canvas-container-layer"
                             onContextReady={this.setCanvasContext} />
                 </div>
+                <button onClick={this.serialize}>Сериализовать</button>
             </div>
         );
     }
@@ -104,10 +105,12 @@ export class MarkerHighlight extends React.Component {
         handleElementMouseEvents(message.type, this.mainTextElements, message);
     };
 
-    stopActiveMouseReaction = (e) => {
+    stopActiveMouseReaction = () => {
         this.props.stopRangeSelection(this.lastHoveredElement.index);
         this.props.textElementHovered(null);
-        this.lastHoveredElement = null;
+    };
+
+    serialize = () => {
     };
 
     setCanvasContext = (width, height, ctx) => {
