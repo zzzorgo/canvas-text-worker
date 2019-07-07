@@ -1,20 +1,20 @@
 import * as React from 'react';
 import { CanvasElement, ICanvasParams } from './CanvasElement';
-import { INITIAL_CANVAS_HEIGHT, VIEW_PORT_SCALE } from './constants';
+import { VIEW_PORT_SCALE } from './constants';
 import { clearCanvas, renderWithChildren } from './utils/render';
 
 export type RenderPlugin = (element: CanvasElement, canvasParams?: ICanvasParams) => void;
 
 // tslint:disable-next-line:no-empty-interface
 interface ICanvasContainerState {
-    canvasWidth: number,
-    canvasHeight: number
+    canvasWidth: number
 }
 
 interface ICanvasContainerProps {
     mix?: string,
     onContextReady?: (canvasWidth: number, canvasHeight: number, ctx?: CanvasRenderingContext2D) => void,
-    objectModel: CanvasElement[]
+    objectModel: CanvasElement[],
+    height: number
 }
 
 export class CanvasContainer extends React.Component<ICanvasContainerProps, ICanvasContainerState> {
@@ -25,7 +25,6 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
         super(props);
 
         this.state = {
-            canvasHeight: INITIAL_CANVAS_HEIGHT,
             canvasWidth: window.innerWidth * VIEW_PORT_SCALE
         }
     }
@@ -35,7 +34,8 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
             const ctx = this.canvas.getContext('2d');
             if (!ctx) { return; }
             this.ctx = ctx;
-            const { canvasHeight, canvasWidth } = this.state;
+            const { canvasWidth } = this.state;
+            const { height: canvasHeight } = this.props;
             
             
             if (this.props.onContextReady) {
@@ -59,8 +59,8 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
     }
     
     public render() {
-        const { canvasHeight, canvasWidth } = this.state;
-        const { mix } = this.props;
+        const { canvasWidth } = this.state;
+        const { mix, height: canvasHeight } = this.props;
 
         return (
             <canvas
@@ -77,11 +77,10 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
 
     private handleResize = () => {
         const canvasWidth = window.innerWidth * VIEW_PORT_SCALE;
-        const canvasHeight = INITIAL_CANVAS_HEIGHT;
+        const { height: canvasHeight } = this.props;
 
         this.setState({
-            canvasWidth,
-            canvasHeight
+            canvasWidth
         });
 
         if (this.props.onContextReady) {
@@ -92,10 +91,13 @@ export class CanvasContainer extends React.Component<ICanvasContainerProps, ICan
     private prepareObjectModelAndRender() {
         const { ctx } = this;
         if (!ctx) { return; }
+        
+        // разобраться почему буквы скачут если положить строчку прямо перед отрисовкой текста
+        ctx.textBaseline = 'bottom';
 
-        const { objectModel } = this.props;
-        const { canvasWidth, canvasHeight } = this.state;
-        const canvasParams = {ctx, width: canvasWidth, height: canvasHeight};
+        const { objectModel, height } = this.props;
+        const { canvasWidth } = this.state;
+        const canvasParams = {ctx, width: canvasWidth, height};
 
         const elements = objectModel;
         this.renderOnCanvas(canvasParams, elements);

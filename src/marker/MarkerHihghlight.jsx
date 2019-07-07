@@ -5,20 +5,15 @@ import { CanvasContainer } from '../canvas/CanvasContainer';
 import { CanvasElement, ISize } from '../canvas/CanvasElement';
 import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../canvas/constants';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
-import { getElementsFromText, getTextParams, handleElementMouseEvents } from '../canvas/utils/objectModel';
+import { getElementsFromText, getTextParams, handleElementMouseEvents, CanvasObjectModel } from '../canvas/utils/objectModel';
 import './MarkerHihghlight.css';
-import { HoverLayer } from './layers/hover/layer';
 import { HighlightBrusheTypes } from 'src/canvas/plugins/brush';
-import {
-    CharSimpleSelectionLayer,
-    SentenceSyntaxLayer,
-    WordSimpleSelectionLayer
-} from './layers/simpleSelection';
-import { SentenceParts } from './layers/simpleSelection/wrappers/syntax/mechanics';
+
 import { connect } from 'react-redux';
-import { startRangeSelection, stopRangeSelection, continueRangeSelection, setCurrentBrush } from './redux-layers/actions';
-import { PredicateLayer, SubjectLayer } from './redux-layers/predicate';
+import { startRangeSelection, stopRangeSelection, continueRangeSelection, setCurrentBrush, removeHoveredElement, setHoveredElement } from './redux-layers/actions';
 import { getShouldContinueRangeSelection } from './redux-layers/selectors';
+import { HoverLayer } from './redux-layers/hover-layer';
+import { SyntaxLayer } from './redux-layers/syntax-layer';
 
 export class MarkerHighlight extends React.Component {
     mainTextElements;
@@ -41,29 +36,36 @@ export class MarkerHighlight extends React.Component {
     render() {
         const { canvasSize, selectedBrush } = this.state;
         const { setCurrentBrush } = this.props;
-        const mainTextElements = this.prepareObjectModel();
+        const com = this.prepareObjectModel();
+        const mainTextElements = com === null ? [] : com.getNodes();
+        const height = com === null ? 0 : com.maxY;
         console.log('heavy render');
 
         return (
             <div>
                 <div>
-                    <button onClick={this.selectSimpleHighlight}>1</button>
-                    <button onClick={this.selectUnicodeHighlight}>2</button>
-                    <button onClick={() => setCurrentBrush(HighlightBrusheTypes.SUBJECT)}>подлежащее</button>
-                    <button onClick={() => setCurrentBrush(HighlightBrusheTypes.PREDICATE)}>сказуемое</button>
+                    <button onClick={() => setCurrentBrush(HighlightBrusheTypes.SUBJECT)}>Подлежащее</button>
+                    <button onClick={() => setCurrentBrush(HighlightBrusheTypes.PREDICATE)}>Сказуемое</button>
                 </div>
                 <div
                     className="layers"
-                    style={{ height: canvasSize.height / VIEW_PORT_SCALE }}
+                    style={{ height: height / VIEW_PORT_SCALE }}
                     onMouseMove={this.deliverMouseMoveMessage}
                     onMouseDown={this.deliverMouseDownMessage}
                     onMouseUp={this.deliverMouseUpMessage}
-                    onClick={this.deliverMouseClickMessage}>
-                        <PredicateLayer
+                    onClick={this.deliverMouseClickMessage}
+                    onMouseLeave={this.stopActiveMouseReaction}>
+                        <SyntaxLayer
+                            height={height}
                             mix="canvas-container-layer"
                             mainTextElements={mainTextElements} 
                             subscription={this.messageDelivery} />
+                        <HoverLayer
+                            height={height}
+                            mix="canvas-container-layer"
+                            subscription={this.messageDelivery} />
                         <CanvasContainer
+                            height={height}
                             objectModel={mainTextElements}
                             mix="canvas-container-layer"
                             onContextReady={this.setCanvasContext} />
@@ -81,10 +83,12 @@ export class MarkerHighlight extends React.Component {
     };
 
     deliverMouseUpMessage = (e) => {
+        this.props.stopRangeSelection(this.lastHoveredElement.index);
         this.deliverMouseMessage(MessageType.mouseUp, e);
     };
 
     deliverMouseClickMessage = (e) => {
+        console.log(e);
         this.deliverMouseMessage(MessageType.mouseClick, e);
     };
 
@@ -98,6 +102,12 @@ export class MarkerHighlight extends React.Component {
         
         this.messageDelivery.dispatchMessage(message);
         handleElementMouseEvents(message.type, this.mainTextElements, message);
+    };
+
+    stopActiveMouseReaction = (e) => {
+        this.props.stopRangeSelection(this.lastHoveredElement.index);
+        this.props.textElementHovered(null);
+        this.lastHoveredElement = null;
     };
 
     setCanvasContext = (width, height, ctx) => {
@@ -115,7 +125,6 @@ export class MarkerHighlight extends React.Component {
 
     prepareObjectModel = () => {
         const { text, canvasSize, ctx } = this.state;
-        const { shouldContinueSelection } = this.props;
 
         if (ctx) {
             const canvasParams = {
@@ -123,36 +132,39 @@ export class MarkerHighlight extends React.Component {
                 ...canvasSize
             };
             const textParams = getTextParams(text, 50, { x: 0, y: 0 });
-            this.mainTextElements = getElementsFromText(canvasParams, textParams);
+            const com = new CanvasObjectModel(canvasParams, textParams);
+            this.mainTextElements = com.getNodes();
 
             this.mainTextElements.forEach(textElement => {
                 if (textElement instanceof TextCanvasElement) {
                     textElement.onMouseDown = () => this.props.startRangeSelection(textElement.index);
-                    textElement.onMouseEnter = () => {
-                        if (shouldContinueSelection) {
-                            this.props.continueRangeSelection(textElement.index);
-                        }
-                    };
-                    textElement.onMouseUp = () => this.props.stopRangeSelection(textElement.index);
+                    textElement.onMouseEnter = () => this.props.textElementEntered(textElement);
+                    textElement.onMouseMove = () => {
+                        this.props.textElementHovered(textElement);
+                        this.lastHoveredElement = textElement;
+                    }
+                    textElement.onMouseLeave = () => this.props.textElementLeaved();
                 }
             });
 
-            return this.mainTextElements;
+            return com;
         }
 
-        return [];
+        return null;
     }
 }
 
 const mapStateToProps = (state) => ({
-    shouldContinueSelection: getShouldContinueRangeSelection(state)
+    // shouldContinueSelection: getShouldContinueRangeSelection(state)
 });
 
 const mapDispatchToProps = (dispatch) => ({
     startRangeSelection: wordIndex => dispatch(startRangeSelection(wordIndex)),
     stopRangeSelection: wordIndex => dispatch(stopRangeSelection(wordIndex)),
-    continueRangeSelection: wordIndex => dispatch(continueRangeSelection(wordIndex)),
-    setCurrentBrush: brushType => dispatch(setCurrentBrush(brushType))
+    textElementEntered: element => dispatch(continueRangeSelection(element)),
+    setCurrentBrush: brushType => dispatch(setCurrentBrush(brushType)),
+    textElementLeaved: () => dispatch(removeHoveredElement()),
+    textElementHovered: element => dispatch(setHoveredElement(element)) 
 });
 
 export const ConnectedMarkerHighlight = connect(mapStateToProps, mapDispatchToProps)(MarkerHighlight);
