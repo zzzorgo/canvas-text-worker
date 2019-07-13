@@ -14,6 +14,7 @@ import { startRangeSelection, stopRangeSelection, continueRangeSelection, setCur
 import { getShouldContinueRangeSelection } from './redux-layers/selectors';
 import { HoverLayer } from './redux-layers/hover-layer';
 import { SyntaxLayer } from './redux-layers/syntax-layer';
+import { DotLayer } from './redux-layers/dot-layer';
 
 export class MarkerHighlight extends React.Component {
     mainTextElements;
@@ -64,6 +65,11 @@ export class MarkerHighlight extends React.Component {
                             height={height}
                             mix="canvas-container-layer"
                             subscription={this.messageDelivery} />
+                        <DotLayer
+                            height={height}
+                            mix="canvas-container-layer"
+                            mainTextElements={mainTextElements} 
+                            subscription={this.messageDelivery} />
                         <CanvasContainer
                             height={height}
                             objectModel={mainTextElements}
@@ -84,12 +90,14 @@ export class MarkerHighlight extends React.Component {
     };
 
     deliverMouseUpMessage = (e) => {
-        this.props.stopRangeSelection(this.lastHoveredElement.index);
+        if (this.lastHoveredElement) {
+            this.props.stopRangeSelection(this.lastHoveredElement.index);
+        }
+        
         this.deliverMouseMessage(MessageType.mouseUp, e);
     };
 
     deliverMouseClickMessage = (e) => {
-        console.log(e);
         this.deliverMouseMessage(MessageType.mouseClick, e);
     };
 
@@ -106,8 +114,10 @@ export class MarkerHighlight extends React.Component {
     };
 
     stopActiveMouseReaction = () => {
-        this.props.stopRangeSelection(this.lastHoveredElement.index);
-        this.props.textElementHovered(null);
+        if (this.lastHoveredElement) {
+            this.props.stopRangeSelection(this.lastHoveredElement.index);
+            this.props.textElementHovered(null);
+        }
     };
 
     serialize = () => {
@@ -134,7 +144,7 @@ export class MarkerHighlight extends React.Component {
                 ctx,
                 ...canvasSize
             };
-            const textParams = getTextParams(text, 50, { x: 0, y: 0 });
+            const textParams = getTextParams(text, 50, { x: 0, y: 100 });
             const com = new CanvasObjectModel(canvasParams, textParams);
             this.mainTextElements = com.getNodes();
 

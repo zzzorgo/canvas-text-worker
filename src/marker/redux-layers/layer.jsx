@@ -1,3 +1,4 @@
+// tslint:disable
 import React from 'react';
 import { MouseMessageTarget } from 'src/message-delivery/target';
 import { CanvasContainer } from 'src/canvas/CanvasContainer';

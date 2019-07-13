@@ -1,11 +1,21 @@
 import { CircleCanvasElement } from 'src/canvas/elements/CircleCanvasElement';
 import { IIndexedCanvasElement } from '../../CanvasElement';
 
-export function dotBrushPlugin(element: IIndexedCanvasElement, highlightedElements: number[]) {
-    if (highlightedElements.includes(element.index)) {
+export function dotBrushPlugin(element: IIndexedCanvasElement, active: boolean) {
         const highlight = new CircleCanvasElement();
-        highlight.rect = element.rect;       
 
-        element.children.push(highlight);
-    }
+        if (active) {
+            highlight.fillStyle = '#4277c8';
+        }
+
+        const radius = 28;
+
+        highlight.rect = {
+            x: element.rect.x + element.rect.width / 2 - radius,
+            y: element.rect.y - radius,
+            width: 2 * radius,
+            height: 2 * radius
+        };       
+
+        return highlight;
 };
