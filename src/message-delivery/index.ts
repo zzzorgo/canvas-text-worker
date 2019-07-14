@@ -2,10 +2,17 @@ import { IPoint } from 'src/canvas/CanvasElement';
 
 export interface IMessage {
     type: MessageType
+    propagationStopped?: boolean;
 }
 
-export interface IMouseMessage extends IMessage {
-    pointerPosition: IPoint
+export class MouseMessage implements IMessage {
+    public type: MessageType
+    public pointerPosition: IPoint;
+    public propagationStopped?: boolean;
+
+    public stopPropagation = () => {
+        this.propagationStopped = true;
+    };
 } 
 
 export interface IDeliveryTarget {
@@ -20,11 +27,12 @@ export interface IMessageDelivery extends ISubscription{
     dispatchMessage: (message: IMessage) => void
 }
 
+// tslint:disable-next-line:max-classes-per-file
 export class MessageDelivery implements IMessageDelivery {
-    private targets = new Set<IDeliveryTarget>();
+    private targets: IDeliveryTarget[] = [];
 
     public subscribe = (target: IDeliveryTarget) => {
-        this.targets.add(target);
+        this.targets.unshift(target);
     };
 
     public dispatchMessage = (message: IMessage) => {

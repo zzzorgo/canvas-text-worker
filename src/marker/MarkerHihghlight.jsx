@@ -1,11 +1,11 @@
 /* tslint:disable */
 import * as React from 'react';
-import { MessageDelivery, ISubscription, IMessage, MessageType } from 'src/message-delivery';
+import { MessageDelivery, ISubscription, IMessage, MessageType, MouseMessage } from 'src/message-delivery';
 import { CanvasContainer } from '../canvas/CanvasContainer';
 import { CanvasElement, ISize } from '../canvas/CanvasElement';
 import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../canvas/constants';
 import { TextCanvasElement } from '../canvas/elements/TextCanvasElement';
-import { getElementsFromText, getTextParams, handleElementMouseEvents, CanvasObjectModel } from '../canvas/utils/objectModel';
+import { getTextParams, handleElementMouseEvents, CanvasObjectModel } from '../canvas/utils/objectModel';
 import './MarkerHihghlight.css';
 import { HighlightBrusheTypes } from 'src/canvas/plugins/brush';
 
@@ -14,6 +14,7 @@ import { startRangeSelection, stopRangeSelection, continueRangeSelection, setCur
 import { getShouldContinueRangeSelection } from './redux-layers/selectors';
 import { HoverLayer } from './redux-layers/hover-layer';
 import { SyntaxLayer } from './redux-layers/syntax-layer';
+import { DotLayer } from './redux-layers/dot-layer';
 
 export class MarkerHighlight extends React.Component {
     mainTextElements;
@@ -64,12 +65,18 @@ export class MarkerHighlight extends React.Component {
                             height={height}
                             mix="canvas-container-layer"
                             subscription={this.messageDelivery} />
+                        <DotLayer
+                            height={height}
+                            mix="canvas-container-layer"
+                            mainTextElements={mainTextElements} 
+                            subscription={this.messageDelivery} />
                         <CanvasContainer
                             height={height}
                             objectModel={mainTextElements}
                             mix="canvas-container-layer"
                             onContextReady={this.setCanvasContext} />
                 </div>
+                <button onClick={this.serialize}>Сериализовать</button>
             </div>
         );
     }
@@ -83,31 +90,37 @@ export class MarkerHighlight extends React.Component {
     };
 
     deliverMouseUpMessage = (e) => {
-        this.props.stopRangeSelection(this.lastHoveredElement.index);
+        if (this.lastHoveredElement) {
+            this.props.stopRangeSelection(this.lastHoveredElement.index);
+        }
+        
         this.deliverMouseMessage(MessageType.mouseUp, e);
     };
 
     deliverMouseClickMessage = (e) => {
-        console.log(e);
         this.deliverMouseMessage(MessageType.mouseClick, e);
     };
 
     deliverMouseMessage = (type, e) => {
         const x = e.nativeEvent.offsetX;
         const y = e.nativeEvent.offsetY;
-        const message = {
-            type,
-            pointerPosition: {x, y}
-        }
+
+        const message = new MouseMessage();
+        message.type = type;
+        message.pointerPosition = {x, y};
         
         this.messageDelivery.dispatchMessage(message);
         handleElementMouseEvents(message.type, this.mainTextElements, message);
     };
 
-    stopActiveMouseReaction = (e) => {
-        this.props.stopRangeSelection(this.lastHoveredElement.index);
-        this.props.textElementHovered(null);
-        this.lastHoveredElement = null;
+    stopActiveMouseReaction = () => {
+        if (this.lastHoveredElement) {
+            this.props.stopRangeSelection(this.lastHoveredElement.index);
+            this.props.textElementHovered(null);
+        }
+    };
+
+    serialize = () => {
     };
 
     setCanvasContext = (width, height, ctx) => {
@@ -131,7 +144,7 @@ export class MarkerHighlight extends React.Component {
                 ctx,
                 ...canvasSize
             };
-            const textParams = getTextParams(text, 50, { x: 0, y: 0 });
+            const textParams = getTextParams(text, 50, { x: 0, y: 100 });
             const com = new CanvasObjectModel(canvasParams, textParams);
             this.mainTextElements = com.getNodes();
 

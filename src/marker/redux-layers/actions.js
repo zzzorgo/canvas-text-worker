@@ -1,8 +1,8 @@
 // tslint:disable
 import * as constants from './actionTypes';
 
-export const selectionClicked = (wordIndex) => ({
-    type: constants.SELECTION_CLICKED,
+export const dotClicked = (wordIndex) => ({
+    type: constants.DOT_CLICKED,
     wordIndex
 });
 

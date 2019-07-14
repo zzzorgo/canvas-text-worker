@@ -7,6 +7,16 @@ const NOT_SET_START_INDEX = -1;
 
 const intialState = {
     syntaxWords: {},
+    dotedWords: {
+        0: {},
+        2: {},
+        4: {},
+        6: {},
+        8: {},
+        10: {},
+        12: {},
+        14: {},
+    },
     currentBrush: HighlightBrusheTypes.NONE,
     startIndex: NOT_SET_START_INDEX,
     highlightingMode: HighlightingMode.STAND_BY,
@@ -15,8 +25,11 @@ const intialState = {
 
 export const highlightReducer = (state = intialState, action = {}) => {
     switch (action.type) {
-        case actionTypes.SELECTION_CLICKED: {
+        case actionTypes.DOT_CLICKED: {
             const newState  = {...state};
+            const {wordIndex} = action;
+            
+            state.dotedWords[wordIndex].active = !state.dotedWords[wordIndex].active;
 
             // newState.predicateWords = state.predicateWords.filter(index => index !== action.wordIndex);
             return newState;

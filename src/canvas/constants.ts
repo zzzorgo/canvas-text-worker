@@ -10,5 +10,5 @@ export const BACKGROUND_COLOR = 'silver';
 export const TEXT_COLOR = 'black';
 
 export function getFontSetting(fontSize: number) {
-    return `100 normal ${fontSize}px 'Calibri'`;
+    return `normal normal 100 ${fontSize}px/1 'Calibri'`;
 }
