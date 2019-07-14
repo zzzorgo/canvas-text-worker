@@ -76,7 +76,10 @@ export const prepareDotObjectModel = createSelector(
                 if (selection) {
                     // const brush = brushMap[selection.brushType];
                     const highlightElement = dotBrushPlugin(textElement, selection.active);
-                    highlightElement.onClick = () => clickHandler(textElement.index);
+                    highlightElement.onMouseDown = (message) => {
+                        message.stopPropagation();
+                        clickHandler(textElement.index);
+                    };
                     elements.push(highlightElement);
                 }
             }

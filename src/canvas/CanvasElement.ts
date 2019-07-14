@@ -1,4 +1,4 @@
-import { IMouseMessage, MessageType } from 'src/message-delivery';
+import { MessageType, MouseMessage } from 'src/message-delivery';
 import { VIEW_PORT_SCALE } from './constants';
 
 export interface IPoint {
@@ -34,10 +34,15 @@ export abstract class CanvasElement {
         const prevIsHit = this.isHit;
         const nextIsHit = this.checkHit(x, y);
 
+        const message = new MouseMessage();
+        message.pointerPosition = {x, y};
+
         if (!prevIsHit && nextIsHit) {
-            this.onMouseEnter({type: MessageType.mouseEnter, pointerPosition: {x, y}});
+            message.type = MessageType.mouseEnter;
+            this.onMouseEnter(message);
         } else if (prevIsHit && !nextIsHit) {
-            this.onMouseLeave({type: MessageType.mouseLeave, pointerPosition: {x, y}});
+            message.type = MessageType.mouseLeave;
+            this.onMouseLeave(message);
         }
 
         this.isHit = nextIsHit;
@@ -46,31 +51,31 @@ export abstract class CanvasElement {
 
     public getIsHit = () => this.isHit;
 
-    public onClick = (e: IMouseMessage) => {
+    public onClick = (e: MouseMessage) => {
         return;
     }
 
-    public onMouseDown = (e: IMouseMessage) => {
+    public onMouseDown = (e: MouseMessage) => {
         return;
     }
 
-    public onMouseUp = (e: IMouseMessage) => {
+    public onMouseUp = (e: MouseMessage) => {
         return;
     }
 
-    public onMouseMove = (e: IMouseMessage) => {
+    public onMouseMove = (e: MouseMessage) => {
         return;
     }
 
-    public onMouseEnter = (e: IMouseMessage) => {
+    public onMouseEnter = (e: MouseMessage) => {
         return;
     }
 
-    public onMouseLeave = (e: IMouseMessage) => {
+    public onMouseLeave = (e: MouseMessage) => {
         return;
     }
 
-    public onContextMenu = (e: IMouseMessage) => {
+    public onContextMenu = (e: MouseMessage) => {
         return;
     }
 

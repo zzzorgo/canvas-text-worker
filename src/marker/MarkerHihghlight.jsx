@@ -1,6 +1,6 @@
 /* tslint:disable */
 import * as React from 'react';
-import { MessageDelivery, ISubscription, IMessage, MessageType } from 'src/message-delivery';
+import { MessageDelivery, ISubscription, IMessage, MessageType, MouseMessage } from 'src/message-delivery';
 import { CanvasContainer } from '../canvas/CanvasContainer';
 import { CanvasElement, ISize } from '../canvas/CanvasElement';
 import { MouseEvent, TEXT, VIEW_PORT_SCALE } from '../canvas/constants';
@@ -104,10 +104,10 @@ export class MarkerHighlight extends React.Component {
     deliverMouseMessage = (type, e) => {
         const x = e.nativeEvent.offsetX;
         const y = e.nativeEvent.offsetY;
-        const message = {
-            type,
-            pointerPosition: {x, y}
-        }
+
+        const message = new MouseMessage();
+        message.type = type;
+        message.pointerPosition = {x, y};
         
         this.messageDelivery.dispatchMessage(message);
         handleElementMouseEvents(message.type, this.mainTextElements, message);

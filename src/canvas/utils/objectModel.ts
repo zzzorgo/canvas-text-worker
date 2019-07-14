@@ -1,4 +1,4 @@
-import { IMouseMessage } from 'src/message-delivery';
+import { MouseMessage } from 'src/message-delivery';
 import { CanvasElement, ICanvasParams, IPoint } from '../CanvasElement';
 import { getFontSetting, VIEW_PORT_SCALE } from '../constants';
 import { CharCanvasElement } from '../elements/CharCanvasElement';
@@ -10,7 +10,7 @@ const WORD_REG_STRING = `[${WORD_REG_CHARS}]+`;
 const NOT_WORD_REG_STRING = `[${NOT_WORD_REG_CHARS}]+`
 const WORD_REG = new RegExp(WORD_REG_STRING);
 const SPLIT_TEXT_REG = new RegExp(`${WORD_REG_STRING}|${NOT_WORD_REG_STRING}`, 'g');
-const SENTECE_SYNTAX_LINE_MARGIN = 40;
+const SENTECE_SYNTAX_LINE_MARGIN = 28; // 40
 
 export interface ITextParams {
     text: string,
@@ -112,8 +112,12 @@ export function getTextParams(text: string = '', fontSize: number = 12, point: I
     };
 }
 
-export function handleElementMouseEvents(eventName: string, elements: CanvasElement[], message: IMouseMessage) {
+export function handleElementMouseEvents(eventName: string, elements: CanvasElement[], message: MouseMessage) {
     elements.forEach(element => {
+        if (message.propagationStopped) {
+            return;
+        }
+
         if (element.setIsHit(message.pointerPosition.x, message.pointerPosition.y)) {
             element[eventName](message);
         }
